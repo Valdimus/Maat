@@ -32,24 +32,44 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    b1 = PLSBackend(
-        name="b1",
-        hostname="127.0.0.1", port=5001, agent_port=5001,
-        monitoring_interval=0, sessions_interval=0, ping_interval=0, timeout=0.1
-    )
-    b2 = PLSBackend(
-        name="b2",
-        hostname="127.0.0.1", port=5002, agent_port=5002,
-        monitoring_interval=0, sessions_interval=0, ping_interval=0, timeout=0.1
-    )
-    b3 = PLSBackend(
-        name="b3",
-        hostname="127.0.0.1", port=5003, agent_port=5003,
-        monitoring_interval=0, sessions_interval=0, ping_interval=0, timeout=0.1
-    )
+    local_test = False
+
+    b1, b2, b3 = None, None, None
+    if local_test:
+        b1 = PLSBackend(
+            name="b1",
+            hostname="127.0.0.1", port=5001, agent_port=5001,
+            monitoring_interval=0, sessions_interval=0, ping_interval=0, timeout=0.1
+        )
+        b2 = PLSBackend(
+            name="b2",
+            hostname="127.0.0.1", port=5002, agent_port=5002,
+            monitoring_interval=0, sessions_interval=0, ping_interval=0, timeout=0.1
+        )
+        b3 = PLSBackend(
+            name="b3",
+            hostname="127.0.0.1", port=5003, agent_port=5003,
+            monitoring_interval=0, sessions_interval=0, ping_interval=0, timeout=0.1
+        )
+    else:
+        b1 = PLSBackend(
+            name="b1",
+            hostname="192.168.5.24", port=8787, agent_port=5005,
+            monitoring_interval=0, sessions_interval=0, ping_interval=0, timeout=0.1
+        )
+        b2 = PLSBackend(
+            name="b2",
+            hostname="192.168.5.27", port=8787, agent_port=5005,
+            monitoring_interval=0, sessions_interval=0, ping_interval=0, timeout=0.1
+        )
+        b3 = PLSBackend(
+            name="b3",
+            hostname="192.168.5.28", port=8787, agent_port=5005,
+            monitoring_interval=0, sessions_interval=0, ping_interval=0, timeout=0.1
+        )
 
     sm = SessionManager(backends=[b1, b2, b3])
     app = Flask("Maât")
     app.secret_key = 'Aj/TaX/,0ZyX ]LW?!jmRR~X3HH3Nr98'
-    wb = TestWebservice(sm, app=app)
+    wb = TestWebservice(sm, app=app, fake=local_test)
     wb.run(host=args.host, port=args.port)

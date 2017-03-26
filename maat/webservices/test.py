@@ -27,6 +27,10 @@ from maat.webservices import Webservice
 class TestWebservice(Webservice):
     """Maât webservice"""
 
+    def __init__(self, *args, fake=True, **kwargs):
+        Webservice.__init__(self, *args, **kwargs)
+        self.__fake = fake
+
     def additional_route(self):
         """Additional route for test authentification"""
 
@@ -121,6 +125,9 @@ class TestWebservice(Webservice):
         """Will create a session"""
         try:
             backend = self.session_manager.add_session(self.username())
-            return redirect(backend.url("/add_sessions/%s" % self.username()))
+            if self.__fake:
+                return redirect(backend.url("/add_sessions/%s" % self.username()))
+            else:
+                return redirect(backend.url())
         except Exception:
             return redirect("/")
