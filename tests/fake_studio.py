@@ -28,10 +28,14 @@ class FakeStudio:
     """Juste a way to create a fake rstudio"""
 
     def __init__(self, command):
+        """
+        :param command: Command to use to launch a fake rsession
+        """
         self.__command = command
         self.__users = {}
 
     def __del__(self):
+        # Stop all client
         for i in self.__users.keys():
             self.stop_client(i)
 
@@ -44,6 +48,11 @@ class FakeStudio:
         return self.__users
 
     def client_running(self, username):
+        """
+        Check if a client have a running session
+        :param username:
+        :return: boolean
+        """
         if username in self.users.keys():
             a = self.users[username].poll()
             if a is not None:
@@ -54,7 +63,7 @@ class FakeStudio:
 
     def spawn_client(self, username):
         """
-        Spawn a client
+        Spawn a client for an user
         :param username:
         :return:
         """
@@ -89,6 +98,12 @@ class FakeStudio:
             return False
 
     def stop_client(self, username):
+        """
+        Stop all session of a client
+        :param username:
+        :return:
+        """
         if self.client_running(username):
             self.users[username].kill()
+            self.users[username].wait(0.1)
             self.users.pop(username)

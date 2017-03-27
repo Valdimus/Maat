@@ -22,7 +22,6 @@
 import time
 import json
 import argparse
-import logging
 from flask import Flask, redirect, request
 from threading import Lock
 
@@ -87,13 +86,15 @@ class FakePLSBackend:
     def user_exist(self, username):
         """User exist"""
         if username in self.users:
-            return {"username": username, "number": self.users[username]}
+            return self.users[username]
         return None
 
     def nb_user(self):
+        """Count the number of connected users"""
         return len(self.users)
 
     def nb_sessions(self):
+        """Count the number of opened sessions"""
         nb = 0
         for key, value in self.users.items():
             nb += value
@@ -119,63 +120,6 @@ class FakePLSBackend:
                 tmp = tmp + v
             return json.dumps(tmp)
 
-
-        # @app.route("/v1/info")
-        # def info():
-        #     """Because without it, it's very boring to test this webservice!"""
-        #     return """
-        #         <h1>Maât MookBackend</h1>
-        #         <a href="/v1/sessions">List session<a><br/>
-        #         <a href="/v1/nb_users">Number of connected client<a><br/>
-        #         <a href="/v1/nb_sessions">Number of sessions<a><br/>
-        #         <a href="/v1/users">List User<a><br/>
-        #         <a href="/v1/cpu">CPU<a><br/>
-        #         <a href="/v1/memory">Memory<a><br/>
-        #         <a href="/v1/swap-memory">Swap Memory<a><br/>
-        #         <a href="/v1/ping">Make a ping<a><br/>
-        #         <p>Version 0.0.1</p>
-        #         """
-
-        # @app.route("/v1/cpu")
-        # def cpu():
-        #     """Get cpu usage of the host"""
-        #     return json.dumps(mcpu.data)
-        #
-        # @app.route("/v1/memory")
-        # def memory():
-        #     """Get memory usage of the host"""
-        #     return json.dumps(mm.data)
-        #
-        # @app.route("/v1/swap-memory")
-        # def swap_memory():
-        #     """Get the swap usage of the host"""
-        #     return json.dumps(sw.data)
-        #
-        # @app.route("/v1/sessions")
-        # def sessions():
-        #     """Get usage of process for each user"""
-        #     return json.dumps(self.users)
-        #
-        # @app.route("/v1/user/<user>")
-        # def exist(user):
-        #     """Check if a user have a process session running in host"""
-        #     return json.dumps(self.user_exist(user))
-        #
-        # @app.route("/v1/users")
-        # def liste():
-        #     """List user that run process on host"""
-        #     return json.dumps(self.list_users())
-        #
-        # @app.route("/v1/nb_users")
-        # def nb_users():
-        #     """Get the number of user using process on host"""
-        #     return json.dumps(self.nb_user())
-        #
-        # @app.route("/v1/nb_sessions")
-        # def nb_sessions():
-        #     """Get the number of user using process on host"""
-        #     return json.dumps(self.nb_sessions())
-
         @app.route("/v1/ping")
         def ping():
             """Just a ping"""
@@ -190,18 +134,15 @@ class FakePLSBackend:
 
         @app.route("/")
         def root():
-            # # Get the user sessions
-            # username = request.args.get("MAAT_USERNAME")
-            #
-            # if username:
-            #     user = self.user_exist(username)
-            #     if user is None:
-            #         user = self.add_user(username)
-            #     return "<p>Username: %s<br \>Nb_session: %s<br \><a href=/add_sessions/%s>Add Session</a>" % (
-            #         username, user["number"], username
-            #     )
-            # return redirect("/v1/info")
-            return "Ok"
+            # Get the user sessions
+            username = request.args.get("MAAT_USERNAME")
+
+            if username:
+                user = self.user_exist(username)
+                if user is None:
+                    user = self.add_user(username)
+                return json.dumps(user)
+            return "No user"
 
         @app.route("/add_sessions/<username>")
         def add_user(username):
@@ -213,14 +154,14 @@ class FakePLSBackend:
             if username not in self.users:
                 return "No session found for this user"
             try:
-                self.users.pop()
+                self.users[username].pop()
                 print("Remove a instance for this user")
             except Exception as e:
                 print(str(e))
             if len(self.users) == 0:
                 self.users.pop(username)
                 return "No sessions left for user '%s'" % username
-            return "%s session left for the user '%s'" % username
+            return "%s session left for the user '%s'" % (len(self.users[username]), username)
 
         @app.route("/clean/<username>")
         def clean_user(username):
@@ -230,6 +171,13 @@ class FakePLSBackend:
 
 
 def create_fake_pls_backend(host="0.0.0.0", port=5000, interval=30):
+    """
+    Create a fake PLS backend. This function will Block!!!!!!!!
+    :param host: The host to listen on
+    :param port: The port to listen on
+    :param interval: Interval to update the resource monitoring
+    :return:
+    """
     app = Flask("Maât-FakePLSBackend")
 
     fake_pls = FakePLSBackend()
@@ -241,7 +189,6 @@ def create_fake_pls_backend(host="0.0.0.0", port=5000, interval=30):
 
 
 if __name__ == "__main__":
-
     parser = argparse.ArgumentParser(description="Maât agent")
     parser.add_argument("-i", "--interval", default=60, type=int, help="Interval between each refresh of data")
     parser.add_argument("-o", "--host", default="0.0.0.0", type=str, help="Host to listen to")

@@ -18,6 +18,7 @@
 # Author: Christophe Nouchet
 # Email: nouchet.christophe@gmail.com
 # Date: 25/03/2017
+# Description: Test backend class
 
 import json
 import time
@@ -31,8 +32,7 @@ from tests import get_open_port
 @pytest.yield_fixture(autouse=True)
 def fakebackend():
     """
-    Directory fixture
-    Will create directory and temp file for testing storage services
+    Create a fakebackend to test the Backend class
     :return:
     """
 
@@ -61,25 +61,41 @@ def fakebackend():
 
 def test_bacic():
     """Test property and default value"""
+
+    # Test that default value are correctly set
+    # port = None => No ':' should be seen in url() and ping_url
+    # name = None => Must use the hostname as name
+    # ping_path = None => Must use the path as ping path
     back = Backend(
         hostname="127.0.0.1", port=None, protocol="http", path="", name=None, timeout=0.5, ping_path=None,
         ping_interval=1
     )
 
     assert(back.hostname == "127.0.0.1")
+
+    # When name is None, it use the hostname as name
+    assert(back.name == back.hostname)
     assert(back.port is None)
     assert(back.protocol == "http")
     assert(back.path == "")
-    assert(back.name == "127.0.0.1")
     assert(back.timeout == 0.5)
+
+    # When ping path is None, it will use path instead
     assert(back.ping_path == back.path)
     assert(back.ping_interval == 1)
+
+    # Backend must be unavailable
     assert(back.available is False)
+
+    # If port is None, url don't content any ':'
     assert(back.url() == "http://127.0.0.1")
     assert(back.url("/") == "http://127.0.0.1/")
     assert(back.url("/toto") == "http://127.0.0.1/toto")
-    assert(back.ping_url == "http://127.0.0.1")
 
+    # As ping_path is None ping_url must be the same as url()
+    assert(back.url() == back.ping_url)
+
+    # Check that the to_dict method return what we are expected
     assert(back.to_dict() == {
         "name": back.name,
         "hostname": back.hostname,
@@ -90,6 +106,7 @@ def test_bacic():
 
     del back
 
+    # Check each value are correctly set
     back = Backend(
         hostname="127.0.0.1", port=5000, protocol="http", path="/path", name="Test", timeout=0.5, ping_path="/ping",
         ping_interval=1
@@ -98,7 +115,7 @@ def test_bacic():
     assert(back.hostname == "127.0.0.1")
     assert(back.port == 5000)
     assert(back.protocol == "http")
-    assert (back.path == "/path")
+    assert(back.path == "/path")
     assert(back.name == "Test")
     assert(back.timeout == 0.5)
     assert(back.ping_path == "/ping")
@@ -123,7 +140,7 @@ def test_bacic():
         "ping_url": back.ping_url,
         "available": back.available
     }))
-    assert (back.__repr__() == json.dumps({
+    assert(back.__repr__() == json.dumps({
         "name": back.name,
         "hostname": back.hostname,
         "url": back.url(),
@@ -133,7 +150,7 @@ def test_bacic():
 
 
 def test_ping(fakebackend):
-    """Check if the ping method work as we except"""
+    """Check if the ping method work as we excepted"""
     process, port = fakebackend
 
     back = Backend(
@@ -141,6 +158,7 @@ def test_ping(fakebackend):
         ping_interval=0.1
     )
 
+    # Recheck that all are correctly set
     assert (back.hostname == "127.0.0.1")
     assert (back.port == port)
     assert (back.protocol == "http")
@@ -155,12 +173,13 @@ def test_ping(fakebackend):
     # Backend must be unavailable
     assert (back.available is False)
 
-    # Start the backend
+    # Start the backend
     process.start()
 
     # Backend must pass available
     mtime = time.time()
 
+    # Wait until the backend appears available
     while not back.available:
         time.sleep(0.1)
         if time.time() - mtime >= 60:
@@ -172,9 +191,11 @@ def test_ping(fakebackend):
     # Now check that if we stop the fakebackend, the backend seems dead
     process.terminate()
 
+    # Wait until backend is unavailable
     while back.available:
         time.sleep(0.1)
         if time.time() - mtime >= 60:
             raise Exception("Backend not seems to be started!!!")
 
+    # Backend must be down
     assert(back.available is False)

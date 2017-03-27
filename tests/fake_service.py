@@ -20,7 +20,9 @@
 # Author: Christophe Nouchet
 # Email: nouchet.christophe@gmail.com
 # Date: 23/03/2017
-
+# Description: This little script to rename the name of the process to see that the PLSMonitoring can monitor user
+#              process.
+# I use the following python module:
 # https://github.com/dvarrazzo/py-setproctitle
 
 import time

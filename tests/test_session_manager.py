@@ -18,10 +18,9 @@
 # Author: Christophe Nouchet
 # Email: nouchet.christophe@gmail.com
 # Date: 25/03/2017
+# Description: Test SessionManager
 
-import os
 import time
-from flask import Flask
 import pytest
 from maat import PLSBackend
 from maat import SessionManager
@@ -31,6 +30,12 @@ from tests import create_fake_pls_backend
 
 
 def add_user(backend, username):
+    """
+    Add user for a backend
+    :param backend: Backend
+    :param username: Username
+    :return:
+    """
     r = backend.make_request(backend.agent_url("/add_sessions/%s" % username))
     r.raise_for_status()
 
@@ -119,7 +124,7 @@ def test_bacic_2(fakebackends):
     add_user(ref[1]["backend"], "toto")
 
     assert (sm.nb_users == 2)
-    assert (sm.connected_users == ["christophe", "toto"])
+    assert (set(sm.connected_users) == set(["christophe", "toto"]))
     assert (sm.get_user_sessions("titi") == [])
     sess = sm.get_user_sessions("christophe")
     assert (len(sess) == 1)
@@ -241,7 +246,7 @@ def test_add_session(fakebackends):
     with pytest.raises(Exception):
         sm.add_session("toto")
 
-    # Verify that we alterne the backend to use
+    # Verify that we alternate the backend to use
     for i in range(2, 6):
         username = "Test_%s" % i
 

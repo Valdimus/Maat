@@ -18,6 +18,7 @@
 # Author: Christophe Nouchet
 # Email: nouchet.christophe@gmail.com
 # Date: 25/03/2017
+# Description: Test CachedData class
 
 import time
 import pytest
@@ -29,8 +30,10 @@ def test_update():
     def update(previous_data):
         return previous_data + 1
 
+    # When we create a cached data,
     cd = CachedData(data=-1, interval=0.2, update_fct=update)
 
+    # First call to cd.data must call the udpate function
     assert(cd.data == 0)
     assert(cd.interval == 0.2)
     time.sleep(0.5)
@@ -46,29 +49,50 @@ def test_setter():
     assert(cd.interval == 0.1)
     cd.interval = 0.2
     assert(cd.interval == 0.2)
-
-    # Check the content
     assert(cd.data == 0)
-    time.sleep(0.3)
+    time.sleep(0.05)
+    # Data must not change
+    assert(cd.data == 0)
+    time.sleep(0.2)
+    # Data must have change
     assert(cd.data == 1)
 
 
-def test_interval():
+def test_last_update():
+    """Test that the last_update is update each time the  data is update"""
+
     def update(previous_data):
         return previous_data + 1
 
-    cd = CachedData(data=-1, interval=1, update_fct=update)
+    cd = CachedData(data=-1, interval=0.5, update_fct=update)
 
-    assert(cd.data == 0)
+    assert (cd.data == 0)
     lu = cd.last_update
 
+    mtime = time.time()
+
+    # Check that last_update is update
     while cd.last_update == lu:
+        time.sleep(0.001)
         d = cd.data
         if cd.last_update == lu:
-            assert(d == 0)
+            assert (d == 0)
         else:
             break
-    assert(cd.data == 1)
+        if time.time() - mtime >= 60:
+            raise Exception("last_update was not update!")
+
+    # Data must have change
+    assert (cd.data == 1)
+
+
+def test_interval():
+    """Test tha we can't see wrong value as interval. Interval must be a number"""
+
+    def update(previous_data):
+        return previous_data + 1
+
+    cd = CachedData(data=-1, interval=0.5, update_fct=update)
 
     with pytest.raises(Exception):
         cd.interval = -1
@@ -90,14 +114,14 @@ def test_interval():
 
 
 def test_update_raise():
-    """Test if the update function raise an exception, will still return a data"""
+    """Test if the update function raise an exception, we will still return a data (the previous one)"""
     def update(previous_data):
         raise Exception("Just an example")
 
     cd = CachedData(data=0, interval=0.1, update_fct=update)
 
     assert(cd.data == 0)
-    time.sleep(1)
+    time.sleep(0.25)
     assert(cd.data == 0)
 
 
@@ -120,6 +144,7 @@ def test_no_interval():
 
 
 def test_force_data():
+    """Test that when we use the force_data, data is update immediately"""
     def update(previous_data):
         return previous_data + 1
 

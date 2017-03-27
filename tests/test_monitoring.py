@@ -18,7 +18,9 @@
 # Author: Christophe Nouchet
 # Email: nouchet.christophe@gmail.com
 # Date: 25/03/2017
+# Description: Test monitoring classes
 
+import gc
 import os
 import pwd
 import time
@@ -31,9 +33,8 @@ from tests import FakeStudio
 @pytest.yield_fixture(autouse=True)
 def fakeservice():
     """
-    Directory fixture
-    Will create directory and temp file for testing storage services
-    :return:
+    Create a fake service to check that we can monitor a Process Launcher service for users. (one or more process by
+    user)
     """
 
     fake_service = FakeStudio(os.path.join(os.path.dirname(os.path.realpath(__file__)), "fake_service.py"))
@@ -41,10 +42,11 @@ def fakeservice():
     yield fake_service
 
     del fake_service
+    gc.collect()
 
 
 def test_montoring():
-    """Test monitoring"""
+    """Test that we can get some information about the host like CPU/Memory/Swap usage percent"""
     monitoring = Monitoring()
 
     temp = monitoring.data
@@ -73,10 +75,12 @@ def test_montoring():
     # assert(monitoring.force_data != temp)
 
 
-def test_pls(fakeservice):
-    """Test that PLSMonitoring works"""
+def test_pls_one_session(fakeservice):
+    """
+    Test that PLSMonitoring can see that the PLS launch a session for a user
+    """
 
-    pls = PLSMonitoring(process_name="FakeService", interval=1)
+    pls = PLSMonitoring(process_name="FakeService", interval=0.1)
 
     # No client should be available
     assert(pls.data == [])
@@ -95,7 +99,7 @@ def test_pls(fakeservice):
     while pls.number() == 0:
         time.sleep(0.1)
         if time.time() - mtime >= 60:
-            raise Exception("Backend not seems to be started!!!")
+            raise Exception("Session seem to not start!")
     assert(len(pls.data) == 1)
     assert(pls.list_username() == [username])
     assert(pls.user_exist(username) is not None)
@@ -104,15 +108,23 @@ def test_pls(fakeservice):
 
     # Erase the client session's
     fakeservice.stop_client(username)
-    # del fakeservice
-    #
-    # mtime = time.time()
-    # while pls.number() > 0:
-    #     time.sleep(0.1)
-    #     if time.time() - mtime >= 60:
-    #         raise Exception("Backend not seems to be stoped!!!")
-    # assert (len(pls.data) == 0)
-    # assert (pls.list_username() == [])
-    # assert (pls.user_exist(username) is None)
-    # assert (pls.user_exist("Toto123456789Toto") is None)
-    # assert (pls.number() == 0)
+
+    del fakeservice
+    gc.collect()
+
+    # Check that the client don't have any session
+    mtime = time.time()
+    while pls.number() > 0:
+        time.sleep(0.1)
+        if time.time() - mtime >= 60:
+            raise Exception("Session seem to be still available!")
+
+    assert (len(pls.data) == 0)
+    assert (pls.list_username() == [])
+    assert (pls.user_exist(username) is None)
+    assert (pls.user_exist("Toto123456789Toto") is None)
+    assert (pls.number() == 0)
+
+
+# Todo:
+# Test that we can watch multiple session for an user
