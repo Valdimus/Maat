@@ -25,3 +25,4 @@ from maat.monitoring import *
 from maat.backend import *
 from maat.session_manager import SessionManager
 from maat.webservices import *
+from maat.agent import create_maat_agent

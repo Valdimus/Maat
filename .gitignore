@@ -61,3 +61,4 @@ target/
 ".idea/Ma\303\242t.iml"	
 diffuser.sh
 .idea/vcs.xml
+.idea*

@@ -1,0 +1,391 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <!--
+# Copyright (C) 2017 NOUCHET Christophe
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program. If not, see <http://www.gnu.org/licenses/>.
+
+# Author: Christophe Nouchet
+# Email: nouchet.christophe@gmail.com
+# Date: 23/03/2017
+-->
+    <title>Monitoring {{ backend }}</title>
+    <meta charset="utf-8" />
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <script src="/js/jquery-3.2.0.min.js"></script>
+    <script type="text/javascript" src="/js/jquery.tablesorter.min.js"></script>
+    <script src="/js/highcharts.js"></script>
+    <link rel="stylesheet" href="/js/bootstrap.min.css" />
+    <link rel="stylesheet" href="/js/bootstrap-theme.min.css" />
+    <script src="/js/bootstrap.min.js"></script>
+    <script src="/js/highcharts-more.js"></script>
+    <script src="/js/solid-gauge.js"></script>
+
+    <script src="/js/jquery.dynatable.js"></script>
+    <link rel="stylesheet" href="/js/jquery.dynatable.css" />
+    <style>
+        .highcharts-yaxis-grid .highcharts-grid-line {
+            display: none;
+        }
+        .dynatable-sort-header {
+            color: black;
+        }
+        th {
+            color: black;
+        }
+        th a {
+            color: black;
+        }
+    </style>
+
+</head>
+<body>
+    <div class="container">
+        <div class="header clearfix">
+            <nav>
+                <ul class="nav nav-pills pull-right">
+                    <li role="presentation"><a href="/">Home</a></li>
+                    <li role="presentation"><a href="/view/monitor">Monitoring</a></li>
+                    <li role="presentation"><a href="#">Sessions</a></li>
+                    <li role="presentation"><a href="#">Contact</a></li>
+                </ul>
+            </nav>
+            <h3 class="text-muted">Mâat</h3>
+        </div>
+
+        {% if backend == None %}
+        <div class="row">
+            <div class="col-lg-12" style="text-align: center">
+                <h1>General Monitoring</h1>
+            </div>
+        </div>
+        {% else %}
+        <div class="row">
+            <div class="col-lg-12" style="text-align: center">
+                <h1>{{ backend }} Monitoring</h1>
+            </div>
+        </div>
+        {% endif %}
+        <div class="row">
+            <div class="col-lg-12">
+                 <select onchange="this.options[this.selectedIndex].value && (window.location = this.options[this.selectedIndex].value);">
+                    <option value="/view/monitor"></option>
+                     <option value="/view/monitor">All</option>
+                  {% for backend in backends %}
+                     <option value="/view/monitor/{{ backend["name"] }}">{{ backend["name"] }}</option>
+                  {% endfor %}
+                </select>
+            </div>
+        </div>
+        <div class="row">
+            <div class="col-lg-6" style="text-align: center">
+                <h2><span id="nb_users">{{ data["nb_users"] }}</span> Users</h2>
+            </div>
+            <div class="col-lg-6" style="text-align: center">
+                <h2><span id="nb_session">{{ data["nb_sessions"] }}</span> Sessions</h2>
+            </div>
+        </div>
+
+        <div class="row" style="margin-top: 5%">
+            <div class="col-lg-4">
+            <div id="container-cpu" style="width: 300px; height: 200px; float: left"></div>
+            </div>
+
+            <div class="col-lg-4">
+                <div id="container-mem" style="width: 300px; height: 200px; float: left"></div>
+            </div>
+            <div class="col-lg-4">
+                <div id="container-swap" style="width: 300px; height: 200px; float: left"></div>
+            </div>
+        </div>
+
+        <div class="row">
+            <div class="col-lg-12" style="text-align: center">
+                <h1>Backends</h1>
+            </div>
+            <div class="col-lg-12" style="text-align: center; margin-top: 2%;">
+                <table id="mytable" style="width: 100%">
+                  <thead>
+                    <tr>
+                      <th>Name</th>
+                      <th>Hostname</th>
+                      <th>CPU</th>
+                      <th>Memory</th>
+                      <th>Swap</th>
+                      <th>Users</th>
+                      <th>Sessions</th>
+                      <th>Available</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                  </tbody>
+                </table>
+            </div>
+        </div>
+
+        <footer class="footer" style="margin-top: 5%;">
+            <p>&copy; 2017 Maât</p>
+        </footer>
+
+    </div> <!-- /container -->
+
+<script>
+        //$('#mytable').dynatable();
+
+        var gaugeOptions = {
+
+            chart: {
+                type: 'solidgauge'
+            },
+
+            title: "Monitoring",
+
+            pane: {
+                center: ['50%', '85%'],
+                size: '140%',
+                startAngle: -90,
+                endAngle: 90,
+                background: {
+                    backgroundColor: '#EEE',
+                    innerRadius: '60%',
+                    outerRadius: '100%',
+                    shape: 'arc'
+                }
+            },
+
+            tooltip: {
+                enabled: false
+            },
+
+            // the value axis
+            yAxis: {
+                stops: [
+                    [0.1, '#55BF3B'], // green
+                    [0.5, '#DDDF0D'], // yellow
+                    [0.9, '#DF5353'] // red
+                ],
+                lineWidth: 0,
+                minorTickInterval: null,
+                tickAmount: 2,
+                title: {
+                    y: -70
+                },
+                labels: {
+                    y: 16
+                }
+            },
+
+            plotOptions: {
+                solidgauge: {
+                    dataLabels: {
+                        y: 5,
+                        borderWidth: 0,
+                        useHTML: true
+                    }
+                }
+            }
+        };
+
+        // The speed gauge
+        var chartCPU = Highcharts.chart('container-cpu', Highcharts.merge(gaugeOptions, {
+            yAxis: {
+                min: 0,
+                max: 100,
+                title: {
+                    text: 'CPU'
+                }
+            },
+
+            credits: {
+                enabled: false
+            },
+
+            series: [{
+                name: 'CPU',
+                data: [{{ data["cpu"]["used"] }}],
+                dataLabels: {
+                    format: '<div style="text-align:center"><span style="font-size:25px;color:' +
+                        ((Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black') + '">{y:.3f}</span><br/>' +
+                           '<span style="font-size:12px;color:silver">%</span></div>'
+                },
+                tooltip: {
+                    valueSuffix: ' %'
+                }
+            }]
+
+        }));
+
+        // The RPM gauge
+        var chartMemory = Highcharts.chart('container-mem', Highcharts.merge(gaugeOptions, {
+            yAxis: {
+                min: 0,
+                max: {{ data["memory"]["total"] }},
+                title: {
+                    text: 'Memory'
+                }
+            },
+            credits: {
+                enabled: false
+            },
+            series: [{
+                name: 'Memory',
+                data: [{{ data["memory"]["used"] / 1000000000 }}],
+                dataLabels: {
+                    format: '<div style="text-align:center"><span style="font-size:25px;color:' +
+                        ((Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black') + '">{y:.3f}</span><br/>' +
+                           '<span style="font-size:12px;color:silver">Go</span></div>'
+                },
+                tooltip: {
+                    valueSuffix: ' Go'
+                }
+            }]
+
+        }));
+
+        // The RPM gauge
+        var chartSwap = Highcharts.chart('container-swap', Highcharts.merge(gaugeOptions, {
+            yAxis: {
+                min: 0,
+                max: {{ data["swap"]["total"] }},
+                title: {
+                    text: 'Swap'
+                }
+            },
+            credits: {
+                enabled: false
+            },
+            series: [{
+                name: 'Swap',
+                data: [{{ data["swap"]["used"] / 1000000000  }}],
+                dataLabels: {
+                    format: '<div style="text-align:center"><span style="font-size:25px;color:' +
+                        ((Highcharts.theme && Highcharts.theme.contrastTextColor) || 'black') + '">{y:.2f}</span><br/>' +
+                           '<span style="font-size:12px;color:silver">Go</span></div>'
+                },
+                tooltip: {
+                    valueSuffix: ' Go'
+                }
+            }]
+
+        }));
+
+
+        $.get("/api/v1/backends_sum", function(data) {
+                myRecords = JSON.parse(data);
+                $('#mytable').dynatable({
+                   features: {
+                     paginate: false,
+                   },
+                  dataset: {
+                    records: myRecords
+                  }
+                });
+            });
+
+        setInterval(function () {
+            $.get("{{ update_url }}", function(data) {
+                mdata = JSON.parse(data)
+
+                // Update Users
+                $("#nb_users").html(mdata["nb_users"])
+
+                // Update Sessions
+                $("#nb_users").html(mdata["nb_sessions"])
+
+                // Update gauge
+                var point,
+                newVal,
+                inc;
+                if (chartCPU) {
+                    point = chartCPU.series[0].points[0];
+                    var val = mdata["cpu"]["used"];
+                    point.update(Math.round(val * 100) / 100);
+                }
+
+                // RPM
+                if (chartMemory) {
+                    point = chartMemory.series[0].points[0];
+                    var val = mdata["memory"]["used"] / 1000000000.0;
+                    point.update(Math.round(val * 1000) / 1000);
+                }
+
+                // RPM
+                if (chartSwap) {
+                    point = chartSwap.series[0].points[0];
+                    var val = mdata["swap"]["used"] / 1000000000.0;
+                    point.update(Math.round(val * 1000) / 1000);
+                }
+            });
+
+
+
+        }, 2000);
+
+
+
+
+        // Bring life to the dials
+        /*
+        setInterval(function () {
+            // Speed
+            var point,
+                newVal,
+                inc;
+
+            if (chartCPU) {
+                point = chartCPU.series[0].points[0];
+                inc = Math.round((Math.random() - 0.5) * 100);
+                newVal = point.y + inc;
+
+                if (newVal < 0 || newVal > 200) {
+                    newVal = point.y - inc;
+                }
+
+                point.update(newVal);
+            }
+
+            // RPM
+            if (chartMemory) {
+                point = chartMemory.series[0].points[0];
+                inc = Math.random() - 0.5;
+                newVal = point.y + inc;
+
+                if (newVal < 0 || newVal > 5) {
+                    newVal = point.y - inc;
+                }
+
+                point.update(newVal);
+            }
+
+            // RPM
+            if (chartSwap) {
+                point = chartSwap.series[0].points[0];
+                inc = Math.random() - 0.5;
+                newVal = point.y + inc;
+
+                if (newVal < 0 || newVal > 5) {
+                    newVal = point.y - inc;
+                }
+
+                point.update(newVal);
+            }
+        }, 5000);
+        */
+
+    </script>
+</body>
+</html>
+

@@ -20,8 +20,8 @@
 # Date: 22/03/2017
 
 import json
-from flask import Flask, redirect
-from maat import SessionManager
+from flask import Flask, redirect, send_from_directory, render_template
+from gevent.wsgi import WSGIServer
 
 
 class Webservice:
@@ -49,8 +49,10 @@ class Webservice:
         """Get the usename of the client. This function only can be used int the context of flask request"""
         return "test"
 
-    def run(self, *args, **kwargs):
-        self.__app.run(*args, **kwargs)
+    def run(self, host="0.0.0.0", port=5000):
+
+        http_server = WSGIServer((host, port), self.__app)
+        http_server.serve_forever()
 
     def route(self):
 
@@ -73,20 +75,67 @@ class Webservice:
             return self.route_add_session()
 
         # All the api route
-        @self.__app.route("/v1/backends")
-        def backends():
+
+        @self.__app.route("/api/v1/summary")
+        @self.__app.route("/api/v1/summary/<backend>")
+        def summary(backend=None):
             """Will list all backends"""
             return self.route_backends()
 
-        @self.__app.route("/v1/nb_users")
-        def nb_users():
+        @self.__app.route("/api/v1/backends")
+        @self.__app.route("/api/v1/backends/<backend>")
+        def backends(backend=None):
+            """Will list all backends"""
+            return self.route_backends()
+
+        @self.__app.route("/api/v1/users")
+        @self.__app.route("/api/v1/users/<backend>")
+        def list_users(backend=None):
+            """List all conencted user"""
+            return self.route_list_user()
+
+        @self.__app.route("/api/v1/monitor")
+        @self.__app.route("/api/v1/monitor/<backend>")
+        def monitor_all(backend=None):
+            return json.dumps(self.session_manager.monitoring(backend))
+
+        @self.__app.route("/api/v1/sessions")
+        @self.__app.route("/api/v1/sessions/<username>")
+        def get_sessions(username=None):
+            return username
+
+        @self.__app.route("/api/v1/nb_sessions")
+        @self.__app.route("/api/v1/nb_sessions/<username>")
+        def nb_sessions(username=None):
+            """Get the number of opened sessions"""
+            return "Todo"
+
+        @self.__app.route("/api/v1/nb_users")
+        @self.__app.route("/api/v1/nb_users/<backend>")
+        def nb_users(backend=None):
             """Count the number of connected user"""
             return self.route_nb_users()
 
-        @self.__app.route("/v1/list_users")
-        def list_users():
-            """List all conencted user"""
-            return self.route_list_user()
+        @self.__app.route("/js/<path:path>")
+        def send_js(path):
+            return send_from_directory('js', path)
+
+        @self.__app.route("/view/monitor")
+        @self.__app.route("/view/monitor/<backend>")
+        def view_monitor_all(backend=None):
+            d = "/" + backend if backend is not None else ""
+            data = {
+                "backend": backend,
+                "backends": [ x.to_dict() for x in self.session_manager.backends],
+                "data": self.session_manager.monitoring(backend),
+                "update_url": "/api/v1/monitor%s" % d
+            }
+            return render_template('monitoring.html', **data)
+
+        @self.__app.route("/api/v1/backends_sum")
+        def backends_sum():
+            return json.dumps(self.session_manager.backends_sum())
+
 
     def additional_route(self):
         pass

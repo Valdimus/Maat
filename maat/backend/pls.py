@@ -88,7 +88,7 @@ class PLSBackend(Backend):
 
     def user_sessions(self, username):
         """
-        Get all session of a user
+        Get all session of an user
         :param username:
         :return: Session
         """
@@ -167,6 +167,39 @@ class PLSBackend(Backend):
 
     def _default_value_pls(self):
         return []
+
+    def simple_monitoring(self):
+        """Return a simple version of the monitoring CachedData"""
+        mon = {}
+
+        data = self.monitoring
+
+        # Compute CPU
+        mon["cpu"] = {
+            "percent": data["cpu"]["percent"] / 100.0,
+            "used": (float(data["cpu"]["percent"]) / 100.0)*float(data["cpu"]["count"]),
+            "total": data["cpu"]["count"]
+        }
+
+        mon["memory"] = {
+            "percent": data["memory"]["percent"] / 100.0,
+            "used": data["memory"]["used"],
+            "cached": data["memory"]["cached"],
+            "total": data["memory"]["total"],
+        }
+
+        mon["swap"] = {
+            "percent": data["swap"]["percent"] / 100.0,
+            "used": data["swap"]["used"],
+            "total": data["swap"]["total"]
+        }
+
+        data = self.sessions
+
+        mon["nb_users"] = self.nb_users
+        mon["nb_sessions"] = len(data)
+
+        return mon
 
     def to_dict(self):
         a = Backend.to_dict(self)

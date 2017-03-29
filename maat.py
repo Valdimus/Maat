@@ -72,4 +72,5 @@ if __name__ == "__main__":
     app = Flask("Maât")
     app.secret_key = 'Aj/TaX/,0ZyX ]LW?!jmRR~X3HH3Nr98'
     wb = TestWebservice(sm, app=app, fake=local_test)
+
     wb.run(host=args.host, port=args.port)
