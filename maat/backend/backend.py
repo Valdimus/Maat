@@ -51,7 +51,7 @@ class Backend:
         self.__timeout = timeout
         self.__ping_path = path if ping_path is None else ping_path
         self.__ping_interval = ping_interval
-        self.__available = CachedData(data=False, interval=self.__ping_interval, update_fct=self._ping)
+        self.__available = CachedData(default_data=False, interval=self.__ping_interval, update_fct=self._ping)
 
     @property
     def hostname(self):
@@ -94,6 +94,9 @@ class Backend:
         """Get the url to ping on"""
         return self.url(self.ping_path)
 
+    def get_ping(self):
+        return self.__available
+
     def url(self, path=None):
         """
         Get the url to the backend
@@ -126,7 +129,8 @@ class Backend:
             "hostname": self.hostname,
             "url": self.url(),
             "ping_url": self.ping_url,
-            "available": self.available
+            "available": self.available,
+            "ping_last_update": self.__available.last_update
         }
 
     def _ping(self, previous_data):

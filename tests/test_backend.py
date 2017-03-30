@@ -101,7 +101,8 @@ def test_bacic():
         "hostname": back.hostname,
         "url": back.url(),
         "ping_url": back.ping_url,
-        "available": back.available
+        "available": back.available,
+        "ping_last_update": back.get_ping().last_update
     })
 
     del back
@@ -131,21 +132,24 @@ def test_bacic():
         "hostname": back.hostname,
         "url": back.url(),
         "ping_url": back.ping_url,
-        "available": back.available
+        "available": back.available,
+        "ping_last_update": back.get_ping().last_update
     })
     assert(str(back) == json.dumps({
         "name": back.name,
         "hostname": back.hostname,
         "url": back.url(),
         "ping_url": back.ping_url,
-        "available": back.available
+        "available": back.available,
+        "ping_last_update": back.get_ping().last_update
     }))
     assert(back.__repr__() == json.dumps({
         "name": back.name,
         "hostname": back.hostname,
         "url": back.url(),
         "ping_url": back.ping_url,
-        "available": back.available
+        "available": back.available,
+        "ping_last_update": back.get_ping().last_update
     }))
 
 

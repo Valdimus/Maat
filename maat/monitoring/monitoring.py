@@ -28,7 +28,7 @@ class Monitoring(CachedData):
 
     def __init__(self, *args, **kwargs):
         # Default data
-        kwargs["data"] = self.update(None)
+        kwargs["default_data"] = self.update(None)
         CachedData.__init__(self, *args, **kwargs)
 
     def update(self, previous_data):

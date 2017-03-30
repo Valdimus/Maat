@@ -45,16 +45,21 @@ class PLSBackend(Backend):
         self.__agent_port = agent_port
 
         self.__monitoring = CachedData(
-            data=self._default_value_monitoring(), interval=monitoring_interval, update_fct=self._update_monitoring
+            default_data=self._default_value_monitoring(), interval=monitoring_interval, update_fct=self._update_monitoring
         )
         self.__sessions = CachedData(
-            data=self._default_value_pls(), interval=sessions_interval, update_fct=self._update_pls
+            default_data=self._default_value_pls(), interval=sessions_interval, update_fct=self._update_pls
         )
         self.__max_session_per_user = max_session_per_user
+        self.__agent_available = False
 
     @property
     def agent_port(self):
         return self.__agent_port
+
+    @property
+    def agent_available(self):
+        return self.__agent_available
 
     @property
     def monitoring(self):
@@ -65,69 +70,25 @@ class PLSBackend(Backend):
         return self.__sessions.data
 
     @property
-    def nb_users(self):
-        return len(self.user_list)
-
-    @property
-    def user_list(self):
-        """List the user connected to the backend"""
-        user_list = []
-        for client in self.sessions:
-            if client["username"] not in user_list:
-                user_list.append(client["username"])
-
-        return user_list
+    def nb_sessions(self):
+        return len(self.__sessions.data)
 
     @property
     def max_session_per_user(self):
+        """Get the max session per user"""
         return self.__max_session_per_user
 
-    def user_reach_max_session(self, username):
-        """Check if the user don't reach the max session on this backend"""
-        return self.max_session_per_user != 0 and len(self.user_sessions(username)) >= self.max_session_per_user
+    def get_monitoring(self):
+        """
+        :return: The cached data for the monitoring
+        """
+        return self.__monitoring
 
-    def user_sessions(self, username):
+    def get_sessions(self):
         """
-        Get all session of an user
-        :param username:
-        :return: Session
+        :return: The cached data for the sessions
         """
-        sessions = []
-        for session in self.user_monitoring_sessions(username):
-            sessions.append(Session(self, username, session["pid"]))
-        return sessions
-
-    def user_monitoring_sessions(self, username):
-        """
-        Return all monitoring sessions of a user
-        :param username: The user name
-        :return: All monitoring sessions of user
-        """
-        user_sessions = []
-        for session in self.sessions:
-            if username == session["username"]:
-                user_sessions.append(session)
-        return user_sessions
-
-    def get_user_monitoring_session(self, username, pid):
-        """
-        Return the monitoring session of username with pid
-        :param username:
-        :param pid:
-        :return: None if no session found, else the session
-        """
-        for session in self.user_monitoring_sessions(username):
-            if session["pid"] == pid:
-                return session
-        return None
-
-    def nb_user_sessions(self, username):
-        """
-        Get the number of session for an user
-        :param username: The user name
-        :return: number
-        """
-        return len(self.user_monitoring_sessions(username))
+        return self.__sessions
 
     def agent_url(self, path=""):
         """
@@ -142,8 +103,19 @@ class PLSBackend(Backend):
             path
         )
 
+    def make_agent_request(self, url, *args, **kwargs):
+        """Make a call to the agent api"""
+
+        temp = self.make_request(self.agent_url(url), *args, **kwargs)
+
+        if temp is None:
+            self.__agent_available = False
+        self.__agent_available = True
+
+        return temp
+
     def _update_monitoring(self, previous_data):
-        temp = self.make_request(self.agent_url("/v1/monitoring"))
+        temp = self.make_agent_request("/v1/monitoring")
 
         if temp is None:
             raise Exception("Impossible to update monitoring")
@@ -151,7 +123,7 @@ class PLSBackend(Backend):
         return temp.json()
 
     def _update_pls(self, previous_data):
-        temp = self.make_request(self.agent_url("/v1/sessions"))
+        temp = self.make_agent_request("/v1/sessions")
 
         if temp is None:
             raise Exception("Impossible to update sessions")
@@ -168,43 +140,20 @@ class PLSBackend(Backend):
     def _default_value_pls(self):
         return []
 
-    def simple_monitoring(self):
-        """Return a simple version of the monitoring CachedData"""
-        mon = {}
-
-        data = self.monitoring
-
-        # Compute CPU
-        mon["cpu"] = {
-            "percent": data["cpu"]["percent"] / 100.0,
-            "used": (float(data["cpu"]["percent"]) / 100.0)*float(data["cpu"]["count"]),
-            "total": data["cpu"]["count"]
-        }
-
-        mon["memory"] = {
-            "percent": data["memory"]["percent"] / 100.0,
-            "used": data["memory"]["used"],
-            "cached": data["memory"]["cached"],
-            "total": data["memory"]["total"],
-        }
-
-        mon["swap"] = {
-            "percent": data["swap"]["percent"] / 100.0,
-            "used": data["swap"]["used"],
-            "total": data["swap"]["total"]
-        }
-
-        data = self.sessions
-
-        mon["nb_users"] = self.nb_users
-        mon["nb_sessions"] = len(data)
-
-        return mon
-
     def to_dict(self):
         a = Backend.to_dict(self)
-        a["nb_users"] = self.nb_users
+        a["agent_url"] = self.agent_url("")
+        a["agent_available"] = self.agent_available
+        a["sessions"] = self.sessions
+        a["sessions_failed"] = self.get_sessions().failed()
+        a["sessions_last_update"] = self.get_sessions().last_update
+        a["nb_sessions"] = self.nb_sessions
+        a["monitoring"] = self.monitoring
+        a["monitoring_failed"] = self.get_monitoring().failed()
+        a["monitoring_last_update"] = self.get_monitoring().last_update
+        a["max_session_per_user"] = self.max_session_per_user
         return a
+
 
 
 

@@ -28,7 +28,7 @@ class PLSMonitoring(CachedData):
 
     def __init__(self, *args, process_name="FakeService", **kwargs):
         # Default data
-        kwargs["data"] = []
+        kwargs["default_data"] = []
         CachedData.__init__(self, *args, **kwargs)
         self.__process_name = process_name
 

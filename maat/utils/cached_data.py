@@ -33,13 +33,16 @@ class CachedData:
     external every time I want to know the value of the data. So this class is made to solve this problem.
     """
 
-    def __init__(self, data=None, interval=60, update_fct=None):
+    def __init__(self, interval=0, update_fct=None, default_data=None, default_on_failure=True):
         """
-        :param data: Default data
         :param interval: Interval to update the data store in the class
         :param update_fct: Function to us to update the data, if None will use the update function of this class
+        :param default_data: Default value to use if it's impossible to update the data
+        :param default_on_failure: Use default value on failed
         """
-        self.__data = data
+        self.__data = default_data
+        self.__default_data = default_data
+        self.__default_on_failure = default_on_failure
         if interval >= 0.0:
             self.__interval = interval
         else:
@@ -47,6 +50,7 @@ class CachedData:
         self.__update_fct = self.update if update_fct is None else update_fct
         self.__lock = Lock()
         self.__last_update = 0
+        self.__failed = False
 
     @property
     def data(self):
@@ -71,6 +75,14 @@ class CachedData:
         return self.__data
 
     @property
+    def default_data(self):
+        return self.__default_data
+
+    @property
+    def default_on_failure(self):
+        return self.__default_on_failure
+
+    @property
     def interval(self):
         """
         Get the interval between each update
@@ -93,6 +105,10 @@ class CachedData:
     def last_update(self):
         """Get the last update"""
         return self.__last_update
+
+    def failed(self):
+        """Return the state of the update"""
+        return self.__failed
 
     def update(self, previous_data):
         """
@@ -126,8 +142,13 @@ class CachedData:
                 # Should made a deep copy of data, to pass it to the update method
                 self.__data = self.__update_fct(self.__data)
                 self.__last_update = time.time()
-
+                self.__failed = False
             except Exception as e:
+                # Set default value if necessary
+                if self.default_on_failure:
+                    self.__data = self.default_data
+
+                self.__failed = True
                 logger.error("Impossible to update data '%s' => %s" % (type(self).__name__, str(e)))
 
             # Relase the lock

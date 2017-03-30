@@ -31,7 +31,7 @@ def test_update():
         return previous_data + 1
 
     # When we create a cached data,
-    cd = CachedData(data=-1, interval=0.2, update_fct=update)
+    cd = CachedData(default_data=-1, interval=0.2, update_fct=update)
 
     # First call to cd.data must call the udpate function
     assert(cd.data == 0)
@@ -45,7 +45,7 @@ def test_setter():
     def update(previous_data):
         return previous_data + 1
 
-    cd = CachedData(data=-1, interval=0.1, update_fct=update)
+    cd = CachedData(default_data=-1, interval=0.1, update_fct=update)
     assert(cd.interval == 0.1)
     cd.interval = 0.2
     assert(cd.interval == 0.2)
@@ -64,7 +64,7 @@ def test_last_update():
     def update(previous_data):
         return previous_data + 1
 
-    cd = CachedData(data=-1, interval=0.5, update_fct=update)
+    cd = CachedData(default_data=-1, interval=0.5, update_fct=update)
 
     assert (cd.data == 0)
     lu = cd.last_update
@@ -92,7 +92,7 @@ def test_interval():
     def update(previous_data):
         return previous_data + 1
 
-    cd = CachedData(data=-1, interval=0.5, update_fct=update)
+    cd = CachedData(default_data=-1, interval=0.5, update_fct=update)
 
     with pytest.raises(Exception):
         cd.interval = -1
@@ -104,13 +104,13 @@ def test_interval():
         cd.interval = None
 
     with pytest.raises(Exception):
-        CachedData(data=-1, interval=-1, update_fct=update)
+        CachedData(default_data=-1, interval=-1, update_fct=update)
     with pytest.raises(Exception):
-        CachedData(data=-1, interval=-1.0, update_fct=update)
+        CachedData(default_data=-1, interval=-1.0, update_fct=update)
     with pytest.raises(Exception):
-        CachedData(data=-1, interval="Toto", update_fct=update)
+        CachedData(default_data=-1, interval="Toto", update_fct=update)
     with pytest.raises(Exception):
-        CachedData(data=-1, interval=None, update_fct=update)
+        CachedData(default_data=-1, interval=None, update_fct=update)
 
 
 def test_update_raise():
@@ -118,16 +118,38 @@ def test_update_raise():
     def update(previous_data):
         raise Exception("Just an example")
 
-    cd = CachedData(data=0, interval=0.1, update_fct=update)
+    cd = CachedData(update_fct=update)
 
-    assert(cd.data == 0)
-    time.sleep(0.25)
-    assert(cd.data == 0)
+    assert(cd.default_on_failure is True)
+    assert(cd.default_data is None)
+    assert(cd.data is None)
+    assert(cd.data is None)
+
+    cd = CachedData(default_data=0, update_fct=update, default_on_failure=False)
+
+    assert (cd.default_on_failure is False)
+    assert (cd.default_data == 0)
+    assert (cd.data == 0)
+    assert (cd.data == 0)
+
+    def titi(pv):
+        if pv == 1:
+            return -1
+        raise Exception("Toto")
+
+    titi.toto = False
+
+    cd = CachedData(default_data=1, update_fct=titi)
+
+    assert (cd.default_on_failure is True)
+    assert (cd.default_data == 1)
+    assert (cd.data == -1)
+    assert (cd.data == 1)
 
 
 def test_no_update_fct():
     """Test that when no update function is set, it does nothing"""
-    cd = CachedData(data=-1, interval=0)
+    cd = CachedData(default_data=-1, interval=0)
     assert(cd.data == -1)
     assert(cd.data == -1)
 
@@ -137,7 +159,7 @@ def test_no_interval():
     def update(previous_data):
         return previous_data + 1
 
-    cd = CachedData(data=-1, interval=0, update_fct=update)
+    cd = CachedData(default_data=-1, interval=0, update_fct=update)
 
     for i in range(0,9):
         assert(cd.data == i)
@@ -148,7 +170,7 @@ def test_force_data():
     def update(previous_data):
         return previous_data + 1
 
-    cd = CachedData(data=-1, interval=0.2, update_fct=update)
+    cd = CachedData(default_data=-1, interval=0.2, update_fct=update)
 
     for i in range(0, 10):
         assert(cd.force_data == i)

@@ -136,7 +136,6 @@ class Webservice:
         def backends_sum():
             return json.dumps(self.session_manager.backends_sum())
 
-
     def additional_route(self):
         pass
 
