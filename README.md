@@ -1,5 +1,7 @@
 # Maât
 
+**This software is still in development, please don't use it in production environment!!!!**
+
 <a title="By No machine-readable author provided. Jeff Dahl assumed (based on copyright claims). [GFDL (http://www.gnu.org/copyleft/fdl.html) or CC BY-SA 4.0-3.0-2.5-2.0-1.0 (http://creativecommons.org/licenses/by-sa/4.0-3.0-2.5-2.0-1.0)], via Wikimedia Commons" href="https://commons.wikimedia.org/wiki/File%3AMaat.svg"><img width="256" alt="Maat" src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ab/Maat.svg/256px-Maat.svg.png"/></a>
 
 
@@ -10,12 +12,12 @@ This project can be use to load balance user between some backends, so you can m
 
 The way that Rstudio work is pretty simple. For each user, it will create an process with the name 'rsession', so if you can simply watch process you can know:
 
-* witch user is connected to Rstudio
-* How manny resources he is consuming (cpu percent, memory percent)
-* On witch project is he working on (because Rstudio project are just directory, and with the current_working_directory (cwd) of the process we know it)
+* witch users are connected to Rstudio
+* How manny resources they are consuming (cpu percent, memory percent)
+* On witch project they are working on (because Rstudio project are just directory, and with the current_working_directory (cwd) of the process we know it)
 
 
-So the principal of this project is to detect witch backend (Rstudio server) have the less user conencted to it to create a session for a new user or eaven handle multiple sessions on different backend. For this purpose you have to launch a MaatAgent on this backend.
+So the principe of this project is to detect witch backend (Rstudio server) have the less user conencted to it to create a session for a new user or even handle multiple sessions on different backend. For this purpose you have to launch a MaatAgent on this backend.
 
 A MaatAgent is just the program that will watch 'rssession' process for each user and expose it on a HTTP API. It will also, register when a user want to create a sessions on the Rstudio service when we are doing the loadbalance (the time that the user really create the session aka connected to Rstudion, otherwise if all user arrive at the same time, the load balancer will choose the same backend for all user)
 
@@ -45,5 +47,8 @@ You should have received a copy of the GNU General Public License along with thi
 ## TODO
 
 * Clearify the api and architecture of the project
-* Add more test on the loadbalancer
+* Add more test on the loadbalancer and other core class
 * Create a locakable website for the loadbalancer
+    * Finish the home page
+    * Developp the Users page (list all user and their processes on the host)
+    * Finish the monitoring page (Add backend and number of users on it + requests)
