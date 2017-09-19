@@ -17,16 +17,7 @@
 
 # Author: Christophe Nouchet
 # Email: nouchet.christophe@gmail.com
-# Date: 22/03/2017
+# Date: 25/03/2017
 
-from maat.requests_class import Requests
-from maat.cached_data import CachedData
-from maat.resource import Resource, DummyResource, SuperDummyResource
-from maat.process_monitoring import ProcessMonitoring, FakeProcessMonitoring
-from maat.host_monitoring import HostMonitoring
-from maat.agent import MaatAgent, create_agent_api
-from maat.agent_resource import AgentResource, HTTPAgentResource, DirectAgentResource
-from maat.backend import Backend
-from maat.backend_manager import BackendManager
-from maat.load_balancer import LoadBalancer
-from maat.webservice import *
+from maat.webservice.webservice import Webservice
+from maat.webservice.test import TestWebservice

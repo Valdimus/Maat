@@ -20,7 +20,6 @@
 # Date: 20/03/2017
 
 from tests.fake_studio import FakeStudio
-from tests.fake_pls_backend import FakePLSBackend, create_fake_pls_backend
 
 def get_open_port():
     """
@@ -34,3 +33,7 @@ def get_open_port():
     port = s.getsockname()[1]
     s.close()
     return port
+
+import sys
+import logging
+logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)

@@ -62,3 +62,7 @@ target/
 diffuser.sh
 .idea/vcs.xml
 .idea*
+
+.cache*
+htmlcov/
+Maat_Project.zargo~

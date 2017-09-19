@@ -22,6 +22,7 @@
 import subprocess
 import pwd
 import os
+import copy
 
 
 class FakeStudio:
@@ -36,8 +37,8 @@ class FakeStudio:
 
     def __del__(self):
         # Stop all client
-        for i in self.__users.keys():
-            self.stop_client(i)
+        self.stop_all()
+        del self.__users
 
     @property
     def command(self):
@@ -54,9 +55,11 @@ class FakeStudio:
         :return: boolean
         """
         if username in self.users.keys():
-            a = self.users[username].poll()
+            if len(self.users[username]) == 0:
+                return False
+            a = self.users[username][-1].poll()
             if a is not None:
-                self.users.pop(username)
+                # self.users[username].pop()
                 return False
             return True
         return False
@@ -68,8 +71,8 @@ class FakeStudio:
         :return:
         """
 
-        if self.client_running(username):
-            return True
+        # if self.client_running(username):
+        #     return True
 
         try:
             def demote(user_uid, user_gid):
@@ -89,21 +92,30 @@ class FakeStudio:
             env['LOGNAME'] = user_name
             env['PWD'] = os.getcwd()
             env['USER'] = user_name
-            self.users[username] = subprocess.Popen(
+            if username not in self.users:
+                self.users[username] = []
+            self.users[username].append(subprocess.Popen(
                 [self.command], preexec_fn=demote(user_uid, user_gid), cwd=os.getcwd(), env=env
-            )
+            ))
             return True
         except Exception as e:
             print(str(e))
             return False
 
-    def stop_client(self, username):
+    def stop_all(self):
+        for i in self.__users.keys():
+            self.stop_client(i, no_pop=True)
+
+    def stop_client(self, username, no_pop=False):
         """
         Stop all session of a client
         :param username:
+        :param no_pop: Don't pop the username
         :return:
         """
         if self.client_running(username):
-            self.users[username].kill()
-            self.users[username].wait(0.1)
-            self.users.pop(username)
+            self.users[username][-1].kill()
+            self.users[username][-1].wait(0.1)
+            self.users[username].pop()
+            if len(self.users[username]) == 0 and not no_pop:
+                self.users.pop(username)

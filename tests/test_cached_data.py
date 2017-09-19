@@ -25,133 +25,133 @@ import pytest
 from maat import CachedData
 
 
+def test_assignment():
+    """Test value assignement"""
+
+    # Just check defaut value
+    cd = CachedData()
+
+    assert(cd.update_fct == cd.update_data)
+    assert(cd.failed is False)
+    assert(cd.last_update == 0)
+    assert(cd.default_data is None)
+    assert(cd.default_on_failure is False)
+    assert(cd.interval == 1.0)
+    assert(cd.no_previous_data is False)
+    assert(cd.auto_update is True)
+    assert(cd.name == "CachedData")
+
+    assert(cd.data == cd.default_data)
+    assert(cd.last_update == 0)
+    assert(cd.failed is True)
+
+    # Check Assignement
+    cd = CachedData(
+        default_data=False, default_on_failure=True, interval=2.0, no_previous_data=True, auto_update=False, name="Toto"
+    )
+
+    assert (cd.update_fct == cd.update_data)
+    assert (cd.failed is False)
+    assert (cd.last_update == 0)
+    assert (cd.default_data is False)
+    assert (cd.default_on_failure is True)
+    assert (cd.interval == 2.0)
+    assert (cd.no_previous_data is True)
+    assert (cd.auto_update is False)
+    assert (cd.name == "Toto")
+
+    assert(cd.data == cd.default_data)
+    assert(cd.last_update == 0)
+    assert(cd.failed is False)
+
+    # Do the update
+    cd.do_update()
+
+    assert(cd.data == cd.default_data)
+    assert(cd.last_update == 0)
+    assert (cd.failed is True)
+
+    def update_fct(previous_data):
+        update_fct.limit +=1
+        if previous_data is None:
+            raise Exception("Error0")
+        rt = not previous_data
+        if update_fct.limit > 1:
+            raise Exception("Error1")
+        return rt
+
+    update_fct.limit = 0
+
+    # Check the default_on_failure
+    cd = CachedData(
+        update_fct=update_fct, default_data=False, default_on_failure=True, no_previous_data=False
+    )
+
+    assert (cd.update_fct == update_fct)
+    assert (cd.no_previous_data is False)
+
+    assert (cd.data is True)
+    lu = cd.last_update
+    assert (cd.last_update > 0)
+    assert (cd.failed is False)
+
+    # This update must failed
+    cd.do_update()
+
+    assert (cd.data is False)
+    assert (cd.last_update == lu)
+    assert (cd.failed is True)
+
+    # Check the no default_on_failure
+    update_fct.limit = 0
+    cd = CachedData(
+        update_fct=update_fct, default_data=False, default_on_failure=False, no_previous_data=False
+    )
+
+    assert (cd.data is True)
+    assert (cd.failed is False)
+
+    # This update must failed
+    cd.do_update()
+
+    assert (cd.data is True)
+    assert (cd.failed is True)
+
+    # Check the previous_data
+    update_fct.limit = 0
+    cd = CachedData(
+        update_fct=update_fct, default_data=False, default_on_failure=False, no_previous_data=True
+    )
+
+    assert (cd.data is False)
+    assert (cd.failed is True)
+
+
 def test_update():
     """Test that the data is update after the interval"""
     def update(previous_data):
         return previous_data + 1
 
     # When we create a cached data,
-    cd = CachedData(default_data=-1, interval=0.2, update_fct=update)
+    cd = CachedData(default_data=-1, interval=0.1, update_fct=update)
 
     # First call to cd.data must call the udpate function
     assert(cd.data == 0)
-    assert(cd.interval == 0.2)
-    time.sleep(0.5)
+    assert(cd.interval == 0.1)
+    time.sleep(0.15)
     assert(cd.data == 1)
 
 
-def test_setter():
-    """Test if we can set a new interval"""
+def test_interval():
+    """Test that when interval is 0 update as each data call"""
     def update(previous_data):
         return previous_data + 1
 
     cd = CachedData(default_data=-1, interval=0.1, update_fct=update)
-    assert(cd.interval == 0.1)
-    cd.interval = 0.2
-    assert(cd.interval == 0.2)
-    assert(cd.data == 0)
-    time.sleep(0.05)
-    # Data must not change
-    assert(cd.data == 0)
-    time.sleep(0.2)
-    # Data must have change
-    assert(cd.data == 1)
 
-
-def test_last_update():
-    """Test that the last_update is update each time the  data is update"""
-
-    def update(previous_data):
-        return previous_data + 1
-
-    cd = CachedData(default_data=-1, interval=0.5, update_fct=update)
-
-    assert (cd.data == 0)
-    lu = cd.last_update
-
-    mtime = time.time()
-
-    # Check that last_update is update
-    while cd.last_update == lu:
-        time.sleep(0.001)
-        d = cd.data
-        if cd.last_update == lu:
-            assert (d == 0)
-        else:
-            break
-        if time.time() - mtime >= 60:
-            raise Exception("last_update was not update!")
-
-    # Data must have change
-    assert (cd.data == 1)
-
-
-def test_interval():
-    """Test tha we can't see wrong value as interval. Interval must be a number"""
-
-    def update(previous_data):
-        return previous_data + 1
-
-    cd = CachedData(default_data=-1, interval=0.5, update_fct=update)
-
-    with pytest.raises(Exception):
-        cd.interval = -1
-    with pytest.raises(Exception):
-        cd.interval = -1.0
-    with pytest.raises(Exception):
-        cd.interval = "Toto"
-    with pytest.raises(Exception):
-        cd.interval = None
-
-    with pytest.raises(Exception):
-        CachedData(default_data=-1, interval=-1, update_fct=update)
-    with pytest.raises(Exception):
-        CachedData(default_data=-1, interval=-1.0, update_fct=update)
-    with pytest.raises(Exception):
-        CachedData(default_data=-1, interval="Toto", update_fct=update)
-    with pytest.raises(Exception):
-        CachedData(default_data=-1, interval=None, update_fct=update)
-
-
-def test_update_raise():
-    """Test if the update function raise an exception, we will still return a data (the previous one)"""
-    def update(previous_data):
-        raise Exception("Just an example")
-
-    cd = CachedData(update_fct=update)
-
-    assert(cd.default_on_failure is True)
-    assert(cd.default_data is None)
-    assert(cd.data is None)
-    assert(cd.data is None)
-
-    cd = CachedData(default_data=0, update_fct=update, default_on_failure=False)
-
-    assert (cd.default_on_failure is False)
-    assert (cd.default_data == 0)
-    assert (cd.data == 0)
-    assert (cd.data == 0)
-
-    def titi(pv):
-        if pv == 1:
-            return -1
-        raise Exception("Toto")
-
-    titi.toto = False
-
-    cd = CachedData(default_data=1, update_fct=titi)
-
-    assert (cd.default_on_failure is True)
-    assert (cd.default_data == 1)
-    assert (cd.data == -1)
-    assert (cd.data == 1)
-
-
-def test_no_update_fct():
-    """Test that when no update function is set, it does nothing"""
-    cd = CachedData(default_data=-1, interval=0)
-    assert(cd.data == -1)
-    assert(cd.data == -1)
+    for i in range(0, 9):
+        assert(cd.data == i)
+        time.sleep(0.15)
 
 
 def test_no_interval():
@@ -161,7 +161,7 @@ def test_no_interval():
 
     cd = CachedData(default_data=-1, interval=0, update_fct=update)
 
-    for i in range(0,9):
+    for i in range(0, 9):
         assert(cd.data == i)
 
 
@@ -170,7 +170,32 @@ def test_force_data():
     def update(previous_data):
         return previous_data + 1
 
-    cd = CachedData(default_data=-1, interval=0.2, update_fct=update)
+    cd = CachedData(default_data=-1, update_fct=update)
 
     for i in range(0, 10):
-        assert(cd.force_data == i)
+        cd.do_update()
+        assert(cd.data == i)
+
+
+def test_error_on_update_fct():
+
+    error = True
+
+    def update(previous_data):
+        if error:
+            raise Exception("Toto")
+        return "OK"
+
+    cd = CachedData(default_data="FAILED", default_on_failure=True, interval=0, update_fct=update)
+
+    for i in range(0, 9):
+        assert(cd.data == "FAILED")
+
+    error = False
+
+    for i in range(0, 9):
+        assert(cd.data == "OK")
+
+    error = True
+    assert(cd.data == "FAILED")
+
