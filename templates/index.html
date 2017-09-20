@@ -148,7 +148,7 @@
             {% if nb_process < max_process %}
             <a class="btn btn-success" target="_blank" href="/add_session"><h2 id="new_process">New Process</h2></a>
             {% else %}
-            <a class="btn btn-danger"><h2 id="new_process">You have reach the maximum process for an user</h2></a>
+            <a class="btn btn-danger"><h2 id="new_process">You have reach the maximum process number for an user</h2></a>
             {% endif %}
           </section>
         </main>
@@ -176,7 +176,7 @@
         sort: true,
         pushState: true,
         search: true,
-        recordCount: true,
+        recordCount: false,
         perPageSelect: false
       },
     });
@@ -234,7 +234,7 @@
             $('#add_session_bt').html('<a class="btn btn-success" target="_blank" href="/add_session"><h2 id="new_process">New Process</h2></a>');
           }
           else {
-            $('#add_session_bt').html('<a class="btn btn-danger"><h2 id="new_process">You have reach the maximum process for an user</h2></a>');
+            $('#add_session_bt').html('<a class="btn btn-danger"><h2 id="new_process">You have reach the maximum process number for an user</h2></a>');
           }
         });
     }

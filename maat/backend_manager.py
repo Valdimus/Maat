@@ -23,6 +23,9 @@ import logging
 
 from maat.backend import Backend
 
+def to_gb(nb):
+    return round(nb / 1000000000, 3)
+
 
 class BackendManager(object):
 
@@ -182,3 +185,75 @@ class BackendManager(object):
             for user in backend.data["processes"]:
                 tmp[user][backend.name] = len(backend.data["processes"][user])
         return tmp
+
+    def monitoring_host(self, backend):
+
+        all_backend = True
+        backends = self.to_list()
+        backend_name = None
+        if isinstance(backend, str):
+            bk = self.get(backend)
+            if bk is not None:
+                backends = [bk]
+                all_backend = False
+                backend_name = backend
+
+        elif isinstance(backend, list):
+            temp = []
+            for i in backend:
+                bk = self.get(i)
+                if bk is not None:
+                    temp.append(bk)
+            if len(temp) > 0:
+                all_backend = False
+                backends = temp
+        data = {
+            "all_backend": all_backend,
+            "backend_name": backend_name,
+            "cpu_percent": 0.0,
+            "cpu_core": 0,
+            "memory": 0,
+            "memory_total": 0,
+            "swap": 0,
+            "swap_total": 0,
+            "nb_users": 0,
+            "nb_processes": 0,
+            "nb_requests": 0,
+            "backends": [],
+            "processes": [],
+            "backend_used": 0,
+            "backend_total": len(self.to_list(all_backends=True)),
+            "dead_backend": []
+        }
+        for backend in backends:
+            data["cpu_percent"] += backend.host("cpu_percent") / len(backends)
+            data["cpu_core"] += backend.host("cpu_nb")
+            data["memory"] += to_gb(backend.host("memory_used"))
+            data["memory_total"] += to_gb(backend.host("memory_total"))
+            data["swap"] += to_gb(backend.host("swap_used"))
+            data["swap_total"] += to_gb(backend.host("swap_total"))
+            data["nb_users"] += backend.nb_user()
+            data["nb_processes"] += backend.nb_process()
+            data["nb_requests"] += backend.nb_requests()
+            data["backends"].append({
+                "name": backend.name,
+                "cpu_percent":  backend.host("cpu_percent"),
+                "memory": "%s/%s" % (to_gb(backend.host("memory_used")), to_gb(backend.host("memory_total"))),
+                "swap": "%s/%s" % (to_gb(backend.host("swap_used")), to_gb(backend.host("swap_total"))),
+                "users": backend.nb_user(),
+                "processes": backend.nb_process(),
+                "requests": backend.nb_requests()
+            })
+
+            data["backend_used"] += 1
+
+        for backend in self.to_list(all_backends=True):
+            if not backend.available():
+                data["dead_backend"].append({
+                    "name": backend.name,
+                    "available": False
+                })
+
+        return data
+
+

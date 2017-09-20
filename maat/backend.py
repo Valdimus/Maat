@@ -120,6 +120,13 @@ class Backend:
         """Get the number of user currently using the backend"""
         return len(self.users())
 
+    def nb_requests(self):
+        """Get the number of requests"""
+        nb = 0
+        for i, v in self.requests().items():
+            nb += len(v)
+        return nb
+
     def processes_timestamp(self):
         """Get the processes timestamp  (time since last update)"""
         return self.data["processes_timestamp"]

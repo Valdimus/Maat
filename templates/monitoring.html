@@ -29,11 +29,30 @@
 
     <title>Maât - Monitoring</title>
 
+    <link href="css/jquery.dynatable.css" rel="stylesheet">
+
     <!-- Bootstrap core CSS -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Custom styles for this template -->
     <link href="css/dashboard.css" rel="stylesheet">
+
+    <style>
+      #gauge_cpu, #gauge_memory, #gauge_swap, #gauge_backend {
+        width:250px; height:250px;
+        display: inline-block;
+        margin: 1em;
+      }
+
+      th a {
+        color: #212529;
+      }
+
+      th a:hover {
+        color: #212529;
+      }
+
+    </style>
   </head>
 
   <body>
@@ -72,8 +91,15 @@
             <li class="nav-item">
               <a class="nav-link" href="#backends">Backends</a>
             </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#dead_backends">Dead backends</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#processes">Processes</a>
+            </li>
           </ul>
         </nav>
+
 
         <main class="col-sm-9 ml-sm-auto col-md-10 pt-3" role="main">
           <h1 id="overview">Overview</h1>
@@ -81,62 +107,85 @@
           <section class="row text-center placeholders">
             <div class="col-6 col-sm-3 placeholder">
               <!--<img src="data:image/gif;base64,R0lGODlhAQABAIABAAJ12AAAACwAAAAAAQABAAACAkQBADs=" width="200" height="200" class="img-fluid rounded-circle" alt="Generic placeholder thumbnail">-->
-              <div id="gauge_cpu" class="200x200px"></div>
+              <div id="gauge_cpu"></div>
               <!--<h4>CPU</h4>-->
-              <div class="text-muted">percent</div>
+              <!--<div class="text-muted">percent</div>-->
             </div>
             <div class="col-6 col-sm-3 placeholder">
               <!--<img src="data:image/gif;base64,R0lGODlhAQABAIABAADcgwAAACwAAAAAAQABAAACAkQBADs=" width="200" height="200" class="img-fluid rounded-circle" alt="Generic placeholder thumbnail">-->
-              <div id="gauge_memory" class="200x200px"></div>
+              <div id="gauge_memory"></div>
               <!--<h4>Memory</h4>-->
-              <span class="text-muted">GB</span>
+              <!--<span class="text-muted">GB</span>-->
             </div>
             <div class="col-6 col-sm-3 placeholder">
               <!--<img src="data:image/gif;base64,R0lGODlhAQABAIABAAJ12AAAACwAAAAAAQABAAACAkQBADs=" width="200" height="200" class="img-fluid rounded-circle" alt="Generic placeholder thumbnail">-->
-              <div id="gauge_swap" class="200x200px"></div>
+              <div id="gauge_swap"></div>
               <!--<h4>Number of processes</h4>-->
-              <span class="text-muted">GB</span>
+              <!--<span class="text-muted">GB</span>-->
             </div>
             <div class="col-6 col-sm-3 placeholder">
-              <div id="gauge_backend" class="200x200px"></div>
+              <div id="gauge_backend"></div>
               <!--<img src="data:image/gif;base64,R0lGODlhAQABAIABAADcgwAAACwAAAAAAQABAAACAkQBADs=" width="200" height="200" class="img-fluid rounded-circle" alt="Generic placeholder thumbnail">-->
               <!--<h4>Number of backend use</h4>-->
               <span class="text-muted"></span>
             </div>
           </section>
+
+          <br />
+
           <section class="row text-center placeholders">
-            <div class="col-6 col-sm-3 placeholder">
-              <h1>100</h1>
+            <div class="col-8 col-sm-4 placeholder">
+              <h2 id="nb_users">100</h2>
               <h4>Connected Users</h4>
               <div class="text-muted"></div>
             </div>
-            <div class="col-6 col-sm-3 placeholder">
-              <h1>200</h1>
-              <h4>Process</h4>
+            <div class="col-8 col-sm-4 placeholder">
+              <h2 id="nb_processes">200</h2>
+              <h4>Processes</h4>
               <span class="text-muted"></span>
             </div>
+            <div class="col-8 col-sm-4 placeholder">
+              <h2 id="nb_requests">0</h2>
+              <h4>Requests</h4>
+              <span class="text-muted"></span>
             </div>
           </section>
 
+
           <h1 id="backends">Backends</h1>
           <div class="table-responsive">
-            <table id="table_backends" style="width: 100%">
+            <table id="table_backends" class="table table-striped" style="width: 100%">
               <thead>
                 <tr>
-                  <th>Name</th>
-                  <th>CPU</th>
-                  <th>Memory</th>
-                  <th>Swap</th>
-                  <th>Users</th>
-                  <th>Processes</th>
-                  <th>Requests</th>
-                  <th>Available</th>
+                  <th data-dynatable-column="name">Name</th>
+                  <th data-dynatable-column="cpu_percent">CPU</th>
+                  <th data-dynatable-column="memory">Memory</th>
+                  <th data-dynatable-column="swap">Swap</th>
+                  <th data-dynatable-column="users">Users</th>
+                  <th data-dynatable-column="processes">Processes</th>
+                  <th data-dynatable-column="requests">Requests</th>
                 </tr>
               </thead>
               <tbody>
               </tbody>
             </table>
           </div>
+          <br /><br />
+          <h1 id="dead_backends">Dead backends</h1>
+          <div class="table-responsive">
+            <table id="table_dead_backends" class="table table-striped" style="width: 100%">
+              <thead>
+                <tr>
+                  <th data-dynatable-column="name">Name</th>
+                  <th data-dynatable-column="available">Available</th>
+                </tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+          </div>
+
+
           <br /><br /><br /><br />
           <h1 id="processes">Processes</h1>
           <div class="table-responsive">
@@ -175,6 +224,30 @@
     <script src="/js/jquery.dynatable.js"></script>
     <script>
 
+    // Acticvate dynatable
+    $('#table_backends').dynatable({
+      features: {
+        paginate: false,
+        sort: true,
+        pushState: true,
+        search: true,
+        recordCount: false,
+        perPageSelect: false
+      },
+    });
+
+    $('#table_dead_backends').dynatable({
+      features: {
+        paginate: false,
+        sort: true,
+        pushState: true,
+        search: true,
+        recordCount: false,
+        perPageSelect: false
+      },
+    });
+
+
     // Gauge
     var gauge_cpu = new JustGage({
       id: "gauge_cpu",
@@ -200,13 +273,9 @@
       min: 0,
       max: 5,
       customSectors: [{
-          color: '#00ff00',
-          lo: 50,
-          hi: 100
-        }, {
-          color: '#ff0000',
+          color: '#0000ff',
           lo: 0,
-          hi: 50
+          hi: 500000
         }],
       title: "Available Backend"
     });
@@ -218,15 +287,51 @@
       title: "SWAP"
     });
 
-    setInterval(function() {
-        $.get("/api/v1/backends_sum", function(data) {
-                myRecords = JSON.parse(data);
-                gauge_cpu.refresh(myRecords["cpu_percent"], 100);
-                gauge_memory.refresh(myRecords["memory_used"], myRecords["memory_total"]);
-                gauge_swap.refresh(myRecords["swap_used"], myRecords["swap_total"]);
-                gauge_backend.refresh(myRecords["backend_used"], myRecords["backend_total"]);
-            });
-    }, 2000);
+    // Function to update the dashboard
+    function update_dashboard() {
+      $.get("/api/v1/backends", function(data) {
+          myRecords = JSON.parse(data);
+
+          // Update Gauge
+          gauge_cpu.refresh(myRecords["cpu_percent"], 100);
+          gauge_memory.refresh(myRecords["memory"], myRecords["memory_total"]);
+          gauge_swap.refresh(myRecords["swap"], myRecords["swap_total"]);
+          gauge_backend.refresh(myRecords["backend_used"], myRecords["backend_total"]);
+
+          // Update table
+          records = myRecords["backends"]
+          var dynatable = $('#table_backends').data('dynatable');
+          $('#table_backends').dynatable({
+            dataset: {
+              records: records
+            }
+          }).data('dynatable');
+          dynatable.settings.dataset.originalRecords = records;
+          dynatable.process();
+
+          records = myRecords["dead_backend"]
+          var dynatable = $('#table_dead_backends').data('dynatable');
+          $('#table_dead_backends').dynatable({
+            dataset: {
+              records: records
+            }
+          }).data('dynatable');
+          dynatable.settings.dataset.originalRecords = records;
+          dynatable.process();
+
+
+          // Update h2
+          $('#nb_users').html(myRecords["nb_users"])
+          $('#nb_processes').html(myRecords["nb_processes"])
+          $('#nb_requests').html(myRecords["nb_requests"])
+        });
+    }
+
+    //Update the dashboard on startup
+    update_dashboard();
+
+    // Update dashboard every 2 seconds
+    setInterval(update_dashboard, 2000);
     </script>
     <!--<script>-->
       <!--$('#menugauche li').click(function(e) {-->

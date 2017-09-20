@@ -149,7 +149,7 @@ class CachedData(object):
         :param previous_data: the previous data, can be None
         :return: the new data
         """
-        raise NotImplemented
+        raise NotImplementedError
 
     def update(self):
         """
