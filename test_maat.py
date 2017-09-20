@@ -1,3 +1,5 @@
+#!/usr/bin/env python3
+
 # coding: utf-8
 
 # Copyright (C) 2017 NOUCHET Christophe
@@ -61,18 +63,18 @@ if __name__ == "__main__":
         # )
     else:
         b1 = Backend(
-            name="b1",
-            service=Resource("192.168.5.24", 8787),
+            name="machine1",
+            service=Resource("192.168.5.24", 8787, name="service-machine1"),
             agent=HTTPAgentResource("192.168.5.24", 5000)
         )
         b2 = Backend(
-            name="b2",
-            service=Resource("192.168.5.28", 8787),
+            name="machine2",
+            service=Resource("192.168.5.28", 8787, name="service-machine2"),
             agent=HTTPAgentResource("192.168.5.28", 5000)
         )
         b3 = Backend(
-            name="b3",
-            service=Resource("192.168.5.46", 8787),
+            name="machine3",
+            service=Resource("192.168.5.46", 8787, name="service-machine3"),
             agent=HTTPAgentResource("192.168.5.46", 5000)
         )
 

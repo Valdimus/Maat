@@ -38,7 +38,7 @@
 
   <body>
     <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
-      <a class="navbar-brand" href="#">Maât</a>
+      <a  target="_blank" class="navbar-brand" href="https://gogs.atrevrix.fr/valdimus/Maat">Maât</a>
       <button class="navbar-toggler d-lg-none" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
@@ -104,19 +104,51 @@
               <span class="text-muted"></span>
             </div>
           </section>
+          <section class="row text-center placeholders">
+            <div class="col-6 col-sm-3 placeholder">
+              <h1>100</h1>
+              <h4>Connected Users</h4>
+              <div class="text-muted"></div>
+            </div>
+            <div class="col-6 col-sm-3 placeholder">
+              <h1>200</h1>
+              <h4>Process</h4>
+              <span class="text-muted"></span>
+            </div>
+            </div>
+          </section>
 
-          <h2 id="backends">Processes</h2>
+          <h1 id="backends">Backends</h1>
           <div class="table-responsive">
-            <table id="mytable" style="width: 100%">
+            <table id="table_backends" style="width: 100%">
               <thead>
                 <tr>
                   <th>Name</th>
-                  <th>Hostname</th>
                   <th>CPU</th>
                   <th>Memory</th>
                   <th>Swap</th>
                   <th>Users</th>
-                  <th>Sessions</th>
+                  <th>Processes</th>
+                  <th>Requests</th>
+                  <th>Available</th>
+                </tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+          </div>
+          <br /><br /><br /><br />
+          <h1 id="processes">Processes</h1>
+          <div class="table-responsive">
+            <table id="table_processes" style="width: 100%">
+              <thead>
+                <tr>
+                  <th>Backend</th>
+                  <th>User</th>
+                  <th>CPU</th>
+                  <th>Memory</th>
+                  <th>Processes</th>
+                  <th>Requests</th>
                   <th>Available</th>
                 </tr>
               </thead>
@@ -125,9 +157,6 @@
             </table>
           </div>
 
-          <section class="text-center placeholders">
-            <a href="/add_session"><h2 id="new_process">New Process</h2></a>
-          </section>
         </main>
       </div>
     </div>
@@ -143,12 +172,16 @@
     <script src="/js/ie10-viewport-bug-workaround.js"></script>
     <script src="/js/raphael-2.1.4.min.js"></script>
     <script src="/js/justgage.js"></script>
+    <script src="/js/jquery.dynatable.js"></script>
     <script>
+
+    // Gauge
     var gauge_cpu = new JustGage({
       id: "gauge_cpu",
       value: 0,
       min: 0,
       max: 100,
+      label: "percent",
       title: "CPU"
     });
     var gauge_memory = new JustGage({
@@ -157,6 +190,7 @@
       min: 0,
       max: 100,
       decimals: 3,
+      label: "GB",
       title: "Memory"
     });
 
@@ -165,6 +199,15 @@
       value: 0,
       min: 0,
       max: 5,
+      customSectors: [{
+          color: '#00ff00',
+          lo: 50,
+          hi: 100
+        }, {
+          color: '#ff0000',
+          lo: 0,
+          hi: 50
+        }],
       title: "Available Backend"
     });
     var gauge_swap = new JustGage({

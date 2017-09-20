@@ -29,16 +29,35 @@
 
     <title>Maât</title>
 
+    <link href="css/jquery.dynatable.css" rel="stylesheet">
+
     <!-- Bootstrap core CSS -->
     <link href="css/bootstrap.min.css" rel="stylesheet">
 
     <!-- Custom styles for this template -->
     <link href="css/dashboard.css" rel="stylesheet">
+
+    <style>
+      #gauge_cpu, #gauge_memory, #gauge_processes {
+        width:250px; height:250px;
+        display: inline-block;
+        margin: 1em;
+      }
+
+      th a {
+        color: #212529;
+      }
+
+      th a:hover {
+        color: #212529;
+      }
+
+    </style>
   </head>
 
   <body>
     <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
-      <a class="navbar-brand" href="#">Maât</a>
+      <a  target="_blank" class="navbar-brand" href="https://gogs.atrevrix.fr/valdimus/Maat">Maât</a>
       <button class="navbar-toggler d-lg-none" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
         <span class="navbar-toggler-icon"></span>
       </button>
@@ -72,9 +91,6 @@
             <li class="nav-item">
               <a class="nav-link" href="#processes">Processes</a>
             </li>
-            <li class="nav-item">
-              <a class="nav-link" href="#new_request">New Process</a>
-            </li>
           </ul>
         </nav>
 
@@ -82,54 +98,58 @@
           <h1 id="overview">Overview</h1>
 
           <section class="row text-center placeholders">
-            <div class="col-6 col-sm-3 placeholder">
-              <div id="gauge_cpu" class="200x200px"></div>
+            <div class="col-8 col-sm-4 placeholder">
+              <div id="gauge_cpu"></div>
               <!--<h4>CPU</h4>-->
               <div class="text-muted">percent</div>
             </div>
-            <div class="col-6 col-sm-3 placeholder">
-              <div id="gauge_memory" class="200x200px"></div>
+            <div class="col-8 col-sm-4 placeholder">
+              <div id="gauge_memory"></div>
               <!--<h4>Memory</h4>-->
               <span class="text-muted">GB</span>
             </div>
-            <div class="col-6 col-sm-3 placeholder">
-              <div id="gauge_swap" class="200x200px"></div>
+            <div class="col-8 col-sm-4 placeholder">
+              <div id="gauge_processes"></div>
               <!--<h4>Number of processes</h4>-->
               <span class="text-muted"></span>
             </div>
-            <div class="col-6 col-sm-3 placeholder">
-              <div id="gauge_backend" class="200x200px"></div>
-              <!--<h4>Number of backend use</h4>-->
-              <span class="text-muted"></span>
-            </div>
+            <!--<div class="col-6 col-sm-3 placeholder">-->
+              <!--<div id="gauge_backend" class="200x200px"></div>-->
+              <!--&lt;!&ndash;<h4>Number of backend use</h4>&ndash;&gt;-->
+              <!--<span class="text-muted"></span>-->
+            <!--</div>-->
           </section>
 
           <h2 id="processes">Processes</h2>
           <div class="table-responsive">
-            <table class="table table-striped">
+            <table class="table table-striped" id="processes_table">
               <thead>
                 <tr>
-                  <th>Backend</th>
-                  <th>Project</th>
-                  <th>CPU (%)</th>
-                  <th>Memory (GB)</th>
+                  <th data-dynatable-column="backend">Backend</th>
+                  <th data-dynatable-column="project">Project</th>
+                  <th data-dynatable-column="cpu">CPU (%)</th>
+                  <th data-dynatable-column="memory">Memory (GB)</th>
                 </tr>
               </thead>
               <tbody>
                 {% for process in processes %}
                 <tr>
-                  <td><a href="/redirect/{{ process['backend'] }}">{{ process['backend'] }}</a></td>
-                  <td><a href="/redirect/{{ process['backend'] }}">{{ process['cwd'] }}</a></td>
-                  <td>{{ process['cpu_percent'] }}</td>
-                  <td>{{ process['memory_info']['rss'] / 1000000000 }}</td>
+                  <td>{{ process['backend'] | safe }}</td>
+                  <td>{{ process['project'] | safe }}</td>
+                  <td>{{ process['cpu'] }}</td>
+                  <td>{{ process['memory'] }}</td>
                 </tr>
                 {% endfor %}
               </tbody>
             </table>
           </div>
-
-          <section class="text-center placeholders">
-            <a href="/add_session"><h2 id="new_process">New Process</h2></a>
+          <br /><br />
+          <section class="text-center placeholders" id="add_session_bt">
+            {% if nb_process < max_process %}
+            <a class="btn btn-success" target="_blank" href="/add_session"><h2 id="new_process">New Process</h2></a>
+            {% else %}
+            <a class="btn btn-danger"><h2 id="new_process">You have reach the maximum process for an user</h2></a>
+            {% endif %}
           </section>
         </main>
       </div>
@@ -138,7 +158,7 @@
     <!-- Bootstrap core JavaScript
     ================================================== -->
     <!-- Placed at the end of the document so the pages load faster -->
-    <script src="/js/jquery-slim.min.js"></script>
+    <script src="/js/jquery.min.js"></script>
     <script>window.jQuery || document.write('<script src="/js/jquery.min.js"><\/script>')</script>
     <script src="/js/popper.min.js"></script>
     <script src="/js/bootstrap.min.js"></script>
@@ -146,12 +166,29 @@
     <script src="/js/ie10-viewport-bug-workaround.js"></script>
     <script src="/js/raphael-2.1.4.min.js"></script>
     <script src="/js/justgage.js"></script>
+    <script src="/js/jquery.dynatable.js"></script>
     <script>
+
+    // Acticvate dynatable
+    $('#processes_table').dynatable({
+      features: {
+        paginate: false,
+        sort: true,
+        pushState: true,
+        search: true,
+        recordCount: true,
+        perPageSelect: false
+      },
+    });
+
+
+    // Gauge
     var gauge_cpu = new JustGage({
       id: "gauge_cpu",
       value: {{ cpu_percent }},
       min: 0,
       max: 100,
+      label: "percent",
       title: "CPU"
     });
     var gauge_memory = new JustGage({
@@ -160,23 +197,53 @@
       min: 0,
       max: {{ memory_total }},
       decimals: 3,
+      label: "GB",
       title: "Memory"
     });
-
-    var gauge_swap = new JustGage({
-      id: "gauge_backend",
-      value: 0,
-      min: 0,
-      max: 100,
-      title: "Backend in use"
-    });
-    var gauge_memory = new JustGage({
-      id: "gauge_swap",
+    var gauge_processes = new JustGage({
+      id: "gauge_processes",
       value: {{ nb_process }},
       min: 0,
       max: {{ max_process }},
-      title: "Number of process"
+      title: "Number of processes"
     });
+
+    // Function to update the dashboard
+    function update_dashboard() {
+      $.get("/api/v1/user_info", function(data) {
+          myRecords = JSON.parse(data);
+
+          // Update Gauge
+          gauge_cpu.refresh(myRecords["cpu_percent"], 100);
+          gauge_memory.refresh(myRecords["memory"], myRecords["memory_total"]);
+          gauge_processes.refresh(myRecords["nb_process"], myRecords["max_process"]);
+
+          // Update table
+          records = myRecords["processes"]
+          var dynatable = $('#processes_table').data('dynatable');
+          $('#processes_table').dynatable({
+            dataset: {
+              records: records
+            }
+          }).data('dynatable');
+          dynatable.settings.dataset.originalRecords = records;
+          dynatable.process();
+
+          // Update bouton
+          if (myRecords["nb_process"] < myRecords["max_process"]) {
+            $('#add_session_bt').html('<a class="btn btn-success" target="_blank" href="/add_session"><h2 id="new_process">New Process</h2></a>');
+          }
+          else {
+            $('#add_session_bt').html('<a class="btn btn-danger"><h2 id="new_process">You have reach the maximum process for an user</h2></a>');
+          }
+        });
+    }
+
+    //Update the dashboard on startup
+    update_dashboard();
+
+    // Update dashboard every 2 seconds
+    setInterval(update_dashboard, 2000);
     </script>
     <!--<script>-->
       <!--$('#menugauche li').click(function(e) {-->

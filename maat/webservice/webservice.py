@@ -67,9 +67,9 @@ class Webservice:
         def root():
             """Will list available session or permit to create one"""
             # return self.route_root()
-            data = self.route_root()
-            print(data)
+            data = self.route_root_2()
             return render_template("index.html", **data)
+
         @self.__app.route("/add_session")
         @self.login_required
         def add_session():
@@ -77,6 +77,10 @@ class Webservice:
             return self.route_add_session()
 
         # All the api route
+
+        @self.__app.route("/api/v1/user_info")
+        def user_info():
+            return json.dumps(self.route_root_2())
 
         @self.__app.route("/api/v1/summary")
         @self.__app.route("/api/v1/summary/<backend>")
@@ -169,13 +173,15 @@ class Webservice:
             data["swap_total"] += backend.host("swap_total")
             data["backend_used"] += 1
 
-        # data["cpu_percent"] = round(data["cpu_percent"] / data["cpu_nb"], 3)
+        temp = data["backend_used"] if data["backend_used"] > 0 else 1
+        data["cpu_percent"] = round(data["cpu_percent"] / temp, 3)
         data["backend_total"] += len(self.load_balancer.backend_manager.to_list(all_backends=True))
         data["memory_total"] = round(data["memory_total"] / 1000000000, 3)
         data["swap_used"] = round(data["swap_used"] / 1000000000, 3)
+        print(data["memory_used"])
         data["memory_used"] = round(data["memory_used"] / 1000000000, 3)
+        print(data["memory_used"])
         data["swap_total"] = round(data["swap_total"] / 1000000000, 3)
-        print(data)
         return data
 
 
@@ -189,6 +195,48 @@ class Webservice:
             if backend.name == backend_name:
                 return redirect(backend.service.url())
         return redirect("/")
+
+    def route_root_2(self):
+        data_src = self.load_balancer.backend_manager.user_sessions_by_backend(self.username())
+
+        cpu_percent = 0.0
+        memory = 0
+        nb_process = 0
+        processes = []
+        nb_backend = 0
+        memory_total = 0.0
+        swap_total = 0.0
+        for backend, backend_processes in data_src.items():
+
+            m_backend = self.load_balancer.backend_manager.get(backend)
+
+            backend_core = m_backend.host("cpu_nb")
+            nb_backend += 1
+
+            memory_total += m_backend.host("memory_total")
+            swap_total += m_backend.host("swap_total")
+
+            for backend_process in backend_processes:
+                processes.append({
+                    "backend": '<a target="_blank" href="/redirect/%s">%s</a>' % (backend, backend),
+                    "project": '<a target="_blank" href="/redirect/%s">%s</a>' % (backend, backend_process["cwd"]),
+                    "cpu": str(backend_process['cpu_percent']),
+                    "memory": str(round(backend_process['memory_info']['rss'] / 1000000000, 3))
+                })
+
+                nb_process += 1
+                cpu_percent += backend_process["cpu_percent"] / backend_core
+                memory += backend_process["memory_info"]["rss"]
+        return {
+            "processes": processes,
+            "nb_process": nb_process,
+            "nb_backend_use": nb_backend,
+            "memory": round(memory / 1000000000, 3),
+            "memory_total": round(memory_total / 1000000000, 3),
+            "swap_total": round(swap_total / 1000000000, 3),
+            "max_process": self.load_balancer.max_sessions_by_user,
+            "cpu_percent": cpu_percent
+        }
 
     def route_root(self):
         """Will list available session or permit to create one"""
@@ -243,9 +291,7 @@ class Webservice:
     def route_add_session(self):
         """Will create a session"""
         try:
-            print("On est ici")
             backend = self.load_balancer.balance(self.username())
-            print("Choose backend %s" % backend)
             return redirect("/redirect/%s" % backend.name)
         except Exception as e:
             print("Error %s" % str(e))

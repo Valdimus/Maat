@@ -67,7 +67,7 @@ class HTTPAgentResource(AgentResource):
     Get the data from a agent using HTTP. This class will cache this data.
     """
 
-    def __init__(self, host, port, interval=1, version="v1", name="HTTPAgentResource", **kwargs):
+    def __init__(self, host, port, interval=2, version="v1", name="HTTPAgentResource", **kwargs):
         """
 
         :param resource: The HTTP Resource to the agent

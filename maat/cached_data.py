@@ -22,7 +22,7 @@
 import time
 import logging
 from copy import deepcopy
-
+from threading import Lock
 
 class CachedData(object):
     """
@@ -57,6 +57,7 @@ class CachedData(object):
         self.__logger = logger if logger is not None else logging.getLogger(
             "%s:%s" % (__name__, self.__class__.__name__)
         )
+        self.__lock = Lock()
 
     @property
     def data(self):
@@ -155,12 +156,18 @@ class CachedData(object):
         Do an update only if it is necessary
         :return:
         """
-        time_since_last_update = time.time() - self.last_update
-        if time_since_last_update > self.interval:
-            self.__logger.debug("Last update of CachedData '%s' is %s, so we have to update it!" % (
-                self.name, time_since_last_update
-            ))
-            self.do_update()
+        if self.__lock.acquire(blocking=False):
+            try:
+                time_since_last_update = time.time() - self.last_update
+                if time_since_last_update > self.interval:
+                    self.__logger.debug("Last update of CachedData '%s' is %s, so we have to update it!" % (
+                        self.name, time_since_last_update
+                    ))
+                    self.do_update()
+            except Exception as e:
+                self.__logger.erro(str(e))
+            finally:
+                self.__lock.release()
 
     def do_update(self):
         """
