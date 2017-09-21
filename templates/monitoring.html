@@ -74,10 +74,15 @@
             <a class="nav-link" href="/monitoring">Monitoring</a>
           </li>
 
-          <li class="nav-item">
-            <a class="nav-link" href="#">Help</a>
-          </li>
+          <!--<li class="nav-item">-->
+            <!--<a class="nav-link" href="#">Help</a>-->
+          <!--</li>-->
         </ul>
+        <div class="form-inline mt-2 mt-md-0">
+          <div class="my-2 my-sm-0">
+            <h2> <span class="badge badge-success">{{ username }}</span></h2>
+          </div>
+        </div>
       </div>
     </nav>
 
@@ -92,10 +97,13 @@
               <a class="nav-link" href="#backends">Backends</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#dead_backends">Dead backends</a>
+              <a class="nav-link" href="#processes">Processes</a>
             </li>
             <li class="nav-item">
-              <a class="nav-link" href="#processes">Processes</a>
+              <a class="nav-link" href="#requests">Requests</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#dead_backends">Dead backends</a>
             </li>
           </ul>
         </nav>
@@ -170,6 +178,40 @@
               </tbody>
             </table>
           </div>
+
+          <br /><br />
+          <h1 id="processes">Processes</h1>
+          <div class="table-responsive">
+            <table id="table_processes" style="width: 100%">
+              <thead>
+                <tr>
+                  <th data-dynatable-column="backend">Backend</th>
+                  <th data-dynatable-column="user">Username</th>
+                  <th data-dynatable-column="cpu">CPU (percent)</th>
+                  <th data-dynatable-column="memory">Memory (GB)</th>
+                </tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+          </div>
+
+          <br /><br />
+          <h1 id="requests">Requests</h1>
+          <div class="table-responsive">
+            <table id="table_requests" style="width: 100%">
+              <thead>
+                <tr>
+                  <th data-dynatable-column="backend">Backend</th>
+                  <th data-dynatable-column="username">Username</th>
+                  <th data-dynatable-column="timestamp">timestamp</th>
+                </tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+          </div>
+
           <br /><br />
           <h1 id="dead_backends">Dead backends</h1>
           <div class="table-responsive">
@@ -178,27 +220,6 @@
                 <tr>
                   <th data-dynatable-column="name">Name</th>
                   <th data-dynatable-column="available">Available</th>
-                </tr>
-              </thead>
-              <tbody>
-              </tbody>
-            </table>
-          </div>
-
-
-          <br /><br /><br /><br />
-          <h1 id="processes">Processes</h1>
-          <div class="table-responsive">
-            <table id="table_processes" style="width: 100%">
-              <thead>
-                <tr>
-                  <th>Backend</th>
-                  <th>User</th>
-                  <th>CPU</th>
-                  <th>Memory</th>
-                  <th>Processes</th>
-                  <th>Requests</th>
-                  <th>Available</th>
                 </tr>
               </thead>
               <tbody>
@@ -224,7 +245,9 @@
     <script src="/js/jquery.dynatable.js"></script>
     <script>
 
-    // Acticvate dynatable
+    //// Acticvate dynatable ////
+
+    // Backends tables
     $('#table_backends').dynatable({
       features: {
         paginate: false,
@@ -236,6 +259,7 @@
       },
     });
 
+    // Dead backends table
     $('#table_dead_backends').dynatable({
       features: {
         paginate: false,
@@ -247,6 +271,29 @@
       },
     });
 
+    // Processes table
+    $('#table_processes').dynatable({
+      features: {
+        paginate: false,
+        sort: true,
+        pushState: true,
+        search: true,
+        recordCount: false,
+        perPageSelect: false
+      },
+    });
+
+    // Requests table
+    $('#table_requests').dynatable({
+      features: {
+        paginate: false,
+        sort: true,
+        pushState: true,
+        search: true,
+        recordCount: false,
+        perPageSelect: false
+      },
+    });
 
     // Gauge
     var gauge_cpu = new JustGage({
@@ -319,6 +366,26 @@
           dynatable.settings.dataset.originalRecords = records;
           dynatable.process();
 
+          records = myRecords["processes"]
+          var dynatable = $('#table_processes').data('dynatable');
+          $('#table_processes').dynatable({
+            dataset: {
+              records: records
+            }
+          }).data('dynatable');
+          dynatable.settings.dataset.originalRecords = records;
+          dynatable.process();
+
+
+          records = myRecords["requests"]
+          var dynatable = $('#table_requests').data('dynatable');
+          $('#table_requests').dynatable({
+            dataset: {
+              records: records
+            }
+          }).data('dynatable');
+          dynatable.settings.dataset.originalRecords = records;
+          dynatable.process();
 
           // Update h2
           $('#nb_users').html(myRecords["nb_users"])

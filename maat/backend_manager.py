@@ -20,6 +20,7 @@
 # Date: 20/03/2017
 
 import logging
+import datetime
 
 from maat.backend import Backend
 
@@ -191,6 +192,7 @@ class BackendManager(object):
         all_backend = True
         backends = self.to_list()
         backend_name = None
+
         if isinstance(backend, str):
             bk = self.get(backend)
             if bk is not None:
@@ -223,7 +225,8 @@ class BackendManager(object):
             "processes": [],
             "backend_used": 0,
             "backend_total": len(self.to_list(all_backends=True)),
-            "dead_backend": []
+            "dead_backend": [],
+            "requests": []
         }
         for backend in backends:
             data["cpu_percent"] += backend.host("cpu_percent") / len(backends)
@@ -247,6 +250,22 @@ class BackendManager(object):
 
             data["backend_used"] += 1
 
+            for process in backend.get_all_processes():
+                data["processes"].append({
+                    "backend": backend.name,
+                    "user": process["username"],
+                    "cpu": process["cpu_percent"],
+                    "memory": to_gb(process["memory_info"]["rss"])
+                })
+
+            for username, requests in backend.requests().items():
+                for request in requests:
+                    data["requests"].append({
+                        "backend": backend.name,
+                        "username": username,
+                        "timestamp": datetime.datetime.fromtimestamp(request).strftime('%d-%m-%Y %H:%M:%S')
+                    })
+
         for backend in self.to_list(all_backends=True):
             if not backend.available():
                 data["dead_backend"].append({
@@ -255,5 +274,8 @@ class BackendManager(object):
                 })
 
         return data
+
+
+
 
 

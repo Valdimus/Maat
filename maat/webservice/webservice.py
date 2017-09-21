@@ -68,6 +68,7 @@ class Webservice:
             """Will list available session or permit to create one"""
             # return self.route_root()
             data = self.route_root()
+            data["username"] = self.username()
             return render_template("index.html", **data)
 
         @self.__app.route("/users")
@@ -137,6 +138,7 @@ class Webservice:
         @self.__app.route("/monitoring")
         def monitor():
             data = {}
+            data["username"] = self.username()
             return render_template('monitoring.html', **data)
 
 

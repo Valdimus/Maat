@@ -105,12 +105,20 @@ class Backend:
 
     def users(self):
         """Get all user connected to the backend"""
-        temp = self.data["processes"].keys()
-        for i in self.data["requests"].keys():
+        temp = []
+        for i in self.data["processes"].keys():
             if i not in temp:
                 temp.append(i)
 
         return temp
+
+    def get_all_processes(self):
+        """Get all processes of the backend"""
+        ret_processes = []
+        for _, processes in self.data["processes"].items():
+            ret_processes = ret_processes + processes
+        print("Process : %s" % ret_processes)
+        return ret_processes
 
     def nb_process(self):
         """Get the number of processes running on the backend"""

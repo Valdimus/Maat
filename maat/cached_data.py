@@ -165,7 +165,7 @@ class CachedData(object):
                     ))
                     self.do_update()
             except Exception as e:
-                self.__logger.erro(str(e))
+                self.__logger.error(str(e))
             finally:
                 self.__lock.release()
 

@@ -113,8 +113,11 @@ class MaatAgent(object):
 
         self.__request_time = request_time
 
+        self.__lock = Lock()
+
         self.__thread = Thread(target=self.run)
         self.__thread.start()
+
 
     def __del__(self):
         self.stop()
@@ -176,38 +179,45 @@ class MaatAgent(object):
         """Update the cache"""
         if not self.cache_need_update():
             return
-        self.__logger.info("Update the cache of the Agent")
 
-        processes = self.process_monitoring.data
-        self.__process_monitoring_lu = self.process_monitoring.last_update
+        if self.__lock.acquire(blocking=False):
+            try:
+                self.__logger.info("Update the cache of the Agent")
 
-        host_monitoring = self.host_monitoring.data
+                processes = self.process_monitoring.data
+                self.__process_monitoring_lu = self.process_monitoring.last_update
 
-        self.__host_monitoring_lu = self.__host_monitoring.last_update
-        self.__requests_lu = self.requests.last_update
-        self.__cache_lu = time.time()
+                host_monitoring = self.host_monitoring.data
 
-        self.__cache = json.dumps({
+                self.__host_monitoring_lu = self.__host_monitoring.last_update
+                self.__requests_lu = self.requests.last_update
+                self.__cache_lu = time.time()
 
-            # The processes
-            "processes_timestamp": self.__process_monitoring_lu,
-            "processes": processes["users"],
-            "nb_process": processes["nb"],
+                self.__cache = json.dumps({
 
-            # The requests
-            "requests": self.requests.requests,
-            "nb_requests": self.requests.nb,
-            "requests_timestamp": self.__requests_lu,
+                    # The processes
+                    "processes_timestamp": self.__process_monitoring_lu,
+                    "processes": processes["users"],
+                    "nb_process": processes["nb"],
 
-            # The total number of processes and requests
-            "nb": self.requests.nb + processes["nb"],
+                    # The requests
+                    "requests": self.requests.requests,
+                    "nb_requests": self.requests.nb,
+                    "requests_timestamp": self.__requests_lu,
 
-            # The host
-            "host": host_monitoring,
-            "host_timestamp": self.__host_monitoring_lu,
+                    # The total number of processes and requests
+                    "nb": self.requests.nb + processes["nb"],
 
-            "timestamp": self.__cache_lu,
-        }, indent=4)
+                    # The host
+                    "host": host_monitoring,
+                    "host_timestamp": self.__host_monitoring_lu,
+
+                    "timestamp": self.__cache_lu,
+                }, indent=4)
+            except Exception as e:
+                self.__logger.error(str(e))
+            finally:
+                self.__lock.release()
 
     def add_process_request(self, username, know_value, force=False):
         """
