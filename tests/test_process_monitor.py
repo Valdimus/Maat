@@ -25,8 +25,16 @@ import gc
 import pwd
 import time
 import pytest
+from tests import check_consistency
 from maat import ProcessMonitoring
 from tests import FakeStudio
+
+
+DEFAULT = {
+    "processes": [],
+    "users": {},
+    "nb": 0
+}
 
 
 @pytest.yield_fixture(autouse=True)
@@ -46,11 +54,11 @@ def test_assignment():
     pm = ProcessMonitoring()
 
     assert(pm.process_name == "FakeService")
-
+    check_consistency(pm.data, DEFAULT)
     pm = ProcessMonitoring(process_name="Toto")
 
     assert(pm.process_name == "Toto")
-
+    check_consistency(pm.data, DEFAULT)
 
 def test_get_process(fake_studio):
     """Check if we saw an application spawning"""
@@ -67,10 +75,12 @@ def test_get_process(fake_studio):
     time.sleep(0.2)
     data = pm.data
     print(data)
+    print(data)
     assert(len(data["processes"]) == 1)
     assert(len(data["users"]) == 1)
     assert(len(data["users"][username]) == 1)
     assert(data["nb"] == 1)
+    check_consistency(data, DEFAULT)
 
     fake_studio.spawn_client(username)
 
@@ -81,6 +91,7 @@ def test_get_process(fake_studio):
     assert(len(data["users"]) == 1)
     assert(len(data["users"][username]) == 2)
     assert(data["nb"] == 2)
+    check_consistency(data, DEFAULT)
 
     fake_studio.stop_all()
 

@@ -21,11 +21,11 @@
 
 import json
 from flask import Flask, redirect, escape, session, request
-from maat.webservice import Webservice
+from maat_webservice import Webservice
 
 
 class TestWebservice(Webservice):
-    """Maât webservice"""
+    """Maât maat_webservice"""
 
     def __init__(self, *args, **kwargs):
         Webservice.__init__(self, *args, **kwargs)

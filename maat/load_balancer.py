@@ -69,7 +69,7 @@ class LoadBalancer:
         # Sort the available backend
         sorted_backends = sorted(self.backend_manager.nb_all_by_backend().items(), key=operator.itemgetter(1))
 
-        for backend_name, value in sorted_backends:
+        for backend_name, _ in sorted_backends:
 
             if backend_name in [i for i, v in sorted_user_backends]:
                 return backend_name, self.backend_manager.get(backend_name).nb()
@@ -143,7 +143,9 @@ class LoadBalancer:
         return self.backend_manager.get(lowest_backend_name), backend_nb
 
     def nb(self):
+        """Return request + processes number for all available backend"""
         return sum([i.nb() for i in self.backend_manager.to_list()])
 
     def nb_process(self):
+        """Return processes number for all available backend"""
         return sum([i.nb_process() for i in self.backend_manager.to_list()])

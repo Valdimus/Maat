@@ -156,18 +156,16 @@ class CachedData(object):
         Do an update only if it is necessary
         :return:
         """
-        if self.__lock.acquire(blocking=False):
-            try:
-                time_since_last_update = time.time() - self.last_update
-                if time_since_last_update > self.interval:
+        time_since_last_update = time.time() - self.last_update
+        if time_since_last_update > self.interval:
+            if self.__lock.acquire(blocking=False):
+                try:
                     self.__logger.debug("Last update of CachedData '%s' is %s, so we have to update it!" % (
                         self.name, time_since_last_update
                     ))
                     self.do_update()
-            except Exception as e:
-                self.__logger.error(str(e))
-            finally:
-                self.__lock.release()
+                finally:
+                    self.__lock.release()
 
     def do_update(self):
         """

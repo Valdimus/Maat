@@ -19,7 +19,7 @@
 
 import time
 import pytest
-from maat import Resource, DummyResource
+from maat import Resource, DummyResource, SuperDummyResource
 import requests
 import multiprocessing as mp
 from maat import MaatAgent, create_agent_api
@@ -142,3 +142,74 @@ def test_make_request(fake_agent):
     assert(agent.cmd("NotADefiniedOne") is None)
 
     process.terminate()
+
+
+def test_superdummyresource():
+    toto = {
+        "/ping": 42,
+        "/test": "ok"
+    }
+    dr = SuperDummyResource(
+        toto, "DummyHost", 123456, protocol="ftp", timeout=1.0, ping_cmd="/ping",
+        ping_interval=2.0, default_url="/default", name="Toto"
+    )
+
+    ## Basic test
+    assert (dr.name == "Toto")
+    assert (dr.host == "DummyHost")
+    assert (dr.port == 123456)
+    assert (dr.protocol == "ftp")
+    assert (dr.timeout == 1.0)
+    assert (dr.ping_cmd == "/ping")
+    assert (dr.available is True)
+    assert (dr.ping_interval == 2.0)
+    assert (dr.url() == "%s://%s:%s/default" % (
+        dr.protocol, dr.host, dr.port
+    ))
+    assert (dr.ping_url == "%s://%s:%s%s" % (
+        dr.protocol, dr.host, dr.port, dr.ping_cmd
+    ))
+    assert (dr.cmd() is None)
+    assert (dr.cmd("/ping") == 42)
+    assert (dr.cmd("/test") == "ok")
+    assert (dr.cmd("This do not exist") is None)
+    assert (dr.ping(None) is True)
+
+    titi = dr.to_dict()
+
+    assert (titi["name"] == dr.name)
+    assert (titi["hostname"] == dr.host)
+    assert (titi["url"] == dr.url())
+    assert (titi["ping_url"] == dr.ping_url)
+    assert (titi["available"] == dr.available)
+
+    ## Assignement test
+    dr.name = "Titi"
+    dr.host = "Tata"
+    dr.port = 654321
+    dr.protocol = "http"
+    dr.timeout = 3.0
+    dr.ping_cmd = "/azertyuiop"
+
+    assert (dr.name == "Titi")
+    assert (dr.host == "Tata")
+    assert (dr.port == 654321)
+    assert (dr.protocol == "http")
+    assert (dr.timeout == 3.0)
+    assert (dr.ping_cmd == "/azertyuiop")
+    assert (dr.cmd("/azertyuiop") is None)
+    assert (dr.url() == "%s://%s:%s/default" % (
+        dr.protocol, dr.host, dr.port
+    ))
+    assert (dr.ping_url == "%s://%s:%s%s" % (
+        dr.protocol, dr.host, dr.port, dr.ping_cmd
+    ))
+    assert (dr.ping_interval == 2.0)
+
+    # Ping should failed
+    assert (dr.ping(True) is False)
+
+    print(dr)
+    print(dr.__repr__())
+
+    print(dr.make_request(None) is None)

@@ -19,11 +19,18 @@
 # Email: nouchet.christophe@gmail.com
 # Date: 22/03/2017
 
+"""
+Generate metrics for the host
+"""
+
 import psutil
 from maat import CachedData
 
 
 class HostMonitoring(CachedData):
+    """
+    Generate metrics for the host that can be use in the monitoring
+    """
 
     def __init__(self, *args, **kwargs):
         """

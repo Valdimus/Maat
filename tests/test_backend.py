@@ -2,7 +2,8 @@ import time
 import json
 import pytest
 import logging
-from maat import Resource, DummyResource, Backend, DirectAgentResource, MaatAgent, FakeProcessMonitoring
+from tests import FakeProcessMonitoring
+from maat import Resource, DummyResource, Backend, DirectAgentResource, MaatAgent
 
 # Copyright (C) 2017 NOUCHET Christophe
 #
@@ -30,9 +31,9 @@ def test_assignement():
         "/default": "ok"
     }, "host", 123456, ping_cmd="/ping", default_url="/default", name="FakeStudio")
 
-    agent = DirectAgentResource(MaatAgent("FakeProcess", sleep_time=0.5, process_interval=0.5))
+    agent = DirectAgentResource(MaatAgent("FakeProcess", sleep_time=0.5, process_interval=0.5, max_process_by_user=2))
 
-    backend = Backend("Test", service, agent, version="v1", interval=2.0, max_session_by_user=2)
+    backend = Backend("Test", service, agent, version="v1", interval=2.0)
 
     assert(backend.name == "Test")
     assert(backend.service == service)
@@ -63,7 +64,7 @@ def test_value():
         "/default": "ok"
     }, "host", 123456, ping_cmd="/ping", default_url="/default", name="FakeStudio")
 
-    agent = DirectAgentResource(MaatAgent("FakeProcess", sleep_time=0.5, process_interval=0.5, process_monitoring=FakeProcessMonitoring))
+    agent = DirectAgentResource(MaatAgent("FakeProcess", sleep_time=0.5, process_interval=0.5, process_monitoring=FakeProcessMonitoring, max_process_by_user=2))
 
     agent.agent.process_monitoring.add_session("christophe")
 
@@ -72,7 +73,7 @@ def test_value():
     agent.agent.requests.add("christophe")
 
     print("Processes %s" % agent.agent.data)
-    backend = Backend("Test", service, agent, version="v1", interval=2.0, max_session_by_user=2)
+    backend = Backend("Test", service, agent, version="v1", interval=2.0)
     print("Backend %s" % backend.processes("christophe"))
     assert (backend.available() is True)
     assert (backend.processes("Titi") == [])

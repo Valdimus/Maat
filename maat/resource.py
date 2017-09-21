@@ -213,7 +213,9 @@ class DummyResource(Resource):
             print("%s was not found!" % str(e))
         return None
 
+
 class SuperDummyResource(DummyResource):
 
+    @property
     def available(self):
         return True

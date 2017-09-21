@@ -20,7 +20,6 @@
 # Date: 21/03/2017
 
 import json
-from flask import Flask
 
 
 class FakeAgent:
@@ -95,9 +94,6 @@ class FakeAgent:
 
     def processes(self):
         return json.dumps(self.__processes, indent=4)
-
-    def add_process(self, username, number, force=0):
-
 
     def ping(self):
         return "OK"

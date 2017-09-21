@@ -20,6 +20,7 @@
 # Date: 25/03/2017
 # Description: Test CachedData class
 
+import sys
 import os
 import gc
 import pwd
@@ -30,11 +31,12 @@ import psutil
 import requests
 import multiprocessing as mp
 from maat import MaatAgent, create_agent_api
-from tests import FakeStudio, get_open_port
-
+from tests import FakeStudio, get_open_port, check_consistency
+from maat.agent import DEFAULT
 
 import signal
 import pytest_cov.embed
+
 
 
 def cleanup(*_):
@@ -87,6 +89,8 @@ def test_assignment():
     assert(ma.max_process_by_user == 1)
     assert(ma.request_time == 30)
 
+    check_consistency(ma.data, DEFAULT)
+
     ma.stop()
 
     ma = MaatAgent("FakeService", sleep_time=1, max_process_by_user=2, request_time=1)
@@ -107,6 +111,9 @@ def test_agent():
     assert(len(data["requests"]) == 0)
     assert (data["nb_requests"] == 0)
     assert(data["nb"] == 0)
+    assert(data["max_process_by_user"] == 2)
+
+    check_consistency(data, DEFAULT)
 
     time.sleep(1)
 
@@ -115,6 +122,9 @@ def test_agent():
     assert(len(data["requests"]) == 0)
     assert (data["nb_requests"] == 0)
     assert(data["nb"] == 0)
+    assert (data["max_process_by_user"] == 2)
+
+    check_consistency(data, DEFAULT)
 
     ma.stop()
 
@@ -139,6 +149,8 @@ def test_add_process_request():
     assert(data["nb_requests"] == 1)
     assert(data["nb"] == 1)
 
+    check_consistency(data, DEFAULT)
+
     time.sleep(1)
 
     data = json.loads(ma.data)
@@ -146,6 +158,7 @@ def test_add_process_request():
     assert(len(data["requests"]) == 0)
     assert (data["nb_requests"] == 0)
     assert(data["nb"] == 0)
+    check_consistency(data, DEFAULT)
 
     time.sleep(1)
 
@@ -158,6 +171,7 @@ def test_add_process_request():
     assert(len(data["requests"]) == 1)
     assert (data["nb_requests"] == 2)
     assert(data["nb"] == 2)
+    check_consistency(data, DEFAULT)
 
     time.sleep(1)
 
@@ -171,6 +185,7 @@ def test_add_process_request():
     assert(len(data["requests"]) == 1)
     assert (data["nb_requests"] == 3)
     assert(data["nb"] == 3)
+    check_consistency(data, DEFAULT)
 
     ma.stop()
 
@@ -193,6 +208,7 @@ def test_update_request(fake_studio):
     assert(len(data["requests"]) == 1)
     assert (data["nb_requests"] == 1)
     assert(data["nb"] == 1)
+    check_consistency(data, DEFAULT)
 
     print(data["requests"])
 
@@ -261,6 +277,8 @@ def test_webservice(fake_agent):
     assert(data["nb_requests"] == 1)
     assert(data["nb"] == 1)
     assert(len(data["requests"]) == 1)
+
+    check_consistency(data, DEFAULT)
 
     r = requests.get(api("/info", use_version=False))
 

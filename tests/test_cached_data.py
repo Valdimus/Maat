@@ -178,7 +178,7 @@ def test_force_data():
 
 
 def test_error_on_update_fct():
-
+    """Test that we have the default value on error"""
     error = True
 
     def update(previous_data):

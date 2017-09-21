@@ -20,6 +20,9 @@
 # Date: 25/03/2017
 # Description: Test CachedData class
 
+from gevent import monkey
+monkey.patch_all(thread=False)
+
 import os
 import gc
 import pwd
@@ -29,8 +32,10 @@ import pytest
 import psutil
 import requests
 import multiprocessing as mp
+from tests import check_consistency
 from maat import MaatAgent, create_agent_api
 from maat import AgentResource, HTTPAgentResource, DirectAgentResource
+from maat.agent import DEFAULT
 from tests import FakeStudio, get_open_port
 
 
@@ -65,17 +70,8 @@ def test_agent_resouce():
 
     agent_resource = AgentResource()
 
-
-    assert(agent_resource.get() == {
-        "processes": {},
-        "processes_timestamp": 0,
-        "requests": {},
-        "requests_timestamp": 0,
-        "nb": 0,
-        "nb_process": 0,
-        "nb_requests": 0,
-        "timestamp": 0
-    })
+    assert(agent_resource.get() == DEFAULT)
+    check_consistency(agent_resource.get(), DEFAULT)
 
     with pytest.raises(Exception):
         agent_resource.add_request("Toto", 254, False)
@@ -95,13 +91,14 @@ def test_HTTPAgentResource(fake_agent):
 
     agent_resource.add_request(username, 0, 1)
 
-    time.sleep(2)
+    time.sleep(5)
 
     print("Agent data: %s" % agent_resource.get())
     assert (agent_resource.get()["nb_process"] == 0)
     assert (agent_resource.get()["nb_requests"] == 1)
     assert (agent_resource.get()["nb"] == 1)
     assert (len(agent_resource.get()["requests"]) == 1)
+    check_consistency(agent_resource.get(), DEFAULT)
 
     assert(agent_resource.available() is True)
 
@@ -121,7 +118,14 @@ def test_direct_agent_resource():
     assert (agent_resource.get()["nb_requests"] == 1)
     assert (agent_resource.get()["nb"] == 1)
     assert (len(agent_resource.get()["requests"]) == 1)
+    check_consistency(agent_resource.get(), DEFAULT)
 
+    assert (agent_resource.available() is True)
+
+    agent_resource.set_available(False)
+    assert (agent_resource.available() is False)
+
+    agent_resource.set_available(True)
     assert (agent_resource.available() is True)
 
     agent.stop()

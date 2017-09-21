@@ -30,7 +30,7 @@ class Backend:
     """
 
     def __init__(
-            self, name, service, agent, version="v1", interval=1.0, max_session_by_user=1
+            self, name, service, agent, version="v1", interval=1.0
     ):
         """
         :param name: The name of the backend
@@ -38,7 +38,6 @@ class Backend:
         :param agent: The agent resource to use (Must be an AgentResource)
         :param version: The version of the agent
         :param interval: Interval definied to update the agent data
-        :param max_session_by_user: The maximum of session that an user can have on the service
         """
         self.__name = name
         self.__service = service
@@ -46,7 +45,6 @@ class Backend:
         self.__service.name = name
         self.__agent.name = "%s-agent" % name
         self.__version = version
-        self.__max_session_by_user = max_session_by_user
         self.__last_sessions_timestamp = 0
         self.__last_requests_timestamp = 0
 
@@ -78,11 +76,11 @@ class Backend:
     @property
     def max_session_by_user(self):
         """Get the maximum session by user"""
-        return self.__max_session_by_user
+        return self.data["max_process_by_user"]
 
     def user_reach_limit(self, username):
         """Chek if an user a reach the limit"""
-        return self.user_nb_processes(username) > self.max_session_by_user
+        return self.user_nb_processes(username) >= self.max_session_by_user
 
     def available(self):
         """Check if the backend is available"""
@@ -127,7 +125,6 @@ class Backend:
         ret_processes = []
         for _, processes in self.data["processes"].items():
             ret_processes = ret_processes + processes
-        print("Process : %s" % ret_processes)
         return ret_processes
 
     def nb_process(self):

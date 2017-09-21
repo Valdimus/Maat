@@ -19,6 +19,9 @@
 # Email: nouchet.christophe@gmail.com
 # Date: 23/03/2017
 
+from gevent import monkey
+monkey.patch_all(thread=False)
+
 import argparse
 from flask import Flask
 from maat import MaatAgent, create_agent_api

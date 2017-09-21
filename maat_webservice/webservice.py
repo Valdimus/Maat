@@ -25,7 +25,7 @@ from gevent.wsgi import WSGIServer
 
 
 class Webservice:
-    """Maât webservice"""
+    """Maât maat_webservice"""
 
     def __init__(self, load_balancer, app=Flask("Maât")):
         self.__app = app

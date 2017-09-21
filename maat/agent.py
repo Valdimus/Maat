@@ -19,8 +19,8 @@
 # Email: nouchet.christophe@gmail.com
 # Date: 22/03/2017
 
-from gevent import monkey
-monkey.patch_all(thread=False)
+# from gevent import monkey
+# monkey.patch_all(thread=False)
 
 import time
 import json
@@ -29,8 +29,23 @@ from gevent.wsgi import WSGIServer
 from threading import Lock, Thread
 import logging
 
+from copy import deepcopy
 from maat import ProcessMonitoring, HostMonitoring
 from maat import Requests
+
+DEFAULT = {
+    "processes": {},
+    "processes_timestamp": 0,
+    "requests": {},
+    "requests_timestamp": 0,
+    "nb": 0,
+    "nb_process": 0,
+    "nb_requests": 0,
+    "host": {},
+    "host_timestamp": 0,
+    "timestamp": 0,
+    "max_process_by_user": 0
+}
 
 
 class MaatAgent(object):
@@ -86,22 +101,10 @@ class MaatAgent(object):
         # Request Last Update
         self.__requests_lu = 0
 
+        default = deepcopy(DEFAULT)
+        default["max_process_by_user"] = max_process_by_user
         # Cache
-        self.__cache = json.dumps({
-            # The processes
-            "processes": {},
-            "nb_process": 0,
-            "processes_timestamp": 0,
-
-            # The requests
-            "requests": {},
-            "requests_timestamp": 0,
-            "nb_requests": 0,
-
-            # The total number of processes and requests
-            "nb": 0,
-            "timestamp": 0
-        })
+        self.__cache = json.dumps(default)
 
         self.__cache_lu = 0
 
@@ -117,7 +120,6 @@ class MaatAgent(object):
 
         self.__thread = Thread(target=self.run)
         self.__thread.start()
-
 
     def __del__(self):
         self.stop()
@@ -158,17 +160,33 @@ class MaatAgent(object):
 
     @property
     def process_monitoring(self):
+        """
+        Get process monitoring object
+        :return ProcessMonitoring
+        """
         return self.__process_monitoring
 
     @property
     def host_monitoring(self):
+        """
+        Get host monitoring object
+        :return HostMonitoring
+        """
         return self.__host_monitoring
 
     @property
     def requests(self):
+        """
+        Get the request objects
+        :return: Requests
+        """
         return self.__requests
 
     def cache_need_update(self):
+        """
+        Check if the cache need update
+        :return: boolean
+        """
         return (
             self.process_monitoring.last_update != self.__process_monitoring_lu or
             self.requests.last_update != self.__requests_lu or
@@ -176,7 +194,7 @@ class MaatAgent(object):
         )
 
     def update_cache(self):
-        """Update the cache"""
+        """Update the cache if necessary"""
         if not self.cache_need_update():
             return
 
@@ -213,6 +231,7 @@ class MaatAgent(object):
                     "host_timestamp": self.__host_monitoring_lu,
 
                     "timestamp": self.__cache_lu,
+                    "max_process_by_user": self.max_process_by_user
                 }, indent=4)
             except Exception as e:
                 self.__logger.error(str(e))
@@ -363,7 +382,7 @@ class MaatAgent(object):
 
 def create_agent_api(host, port, agent, application=None):
     """
-    Create the agent webservice
+    Create the agent maat_webservice
     :param host: Host to listen to
     :param port: Port to listen to
     :param agent: The agent to expose

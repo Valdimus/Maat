@@ -21,10 +21,14 @@
 # Email: nouchet.christophe@gmail.com
 # Date: 23/03/2017
 
+from gevent import monkey
+monkey.patch_all(thread=False)
+
 import logging
 import argparse
 from flask import Flask
-from maat import LoadBalancer, BackendManager, Backend, Resource, HTTPAgentResource, TestWebservice
+from maat import LoadBalancer, BackendManager, Backend, Resource, HTTPAgentResource
+from maat_webservice import TestWebservice
 
 logging.basicConfig(level=logging.INFO)
 

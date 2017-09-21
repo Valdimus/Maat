@@ -22,6 +22,7 @@
 import os
 import json
 from maat import Resource, CachedData
+from maat.agent import DEFAULT
 
 
 class AgentResource:
@@ -33,16 +34,7 @@ class AgentResource:
 
     def get(self):
         """Get the data of the agent"""
-        return {
-            "processes": {},
-            "processes_timestamp": 0,
-            "requests": {},
-            "requests_timestamp": 0,
-            "nb": 0,
-            "nb_process": 0,
-            "nb_requests": 0,
-            "timestamp": 0
-        }
+        return DEFAULT
 
     def add_request(self, username, know_value, force=False):
         """
@@ -79,16 +71,7 @@ class HTTPAgentResource(AgentResource):
         self.__resource = Resource(host, port, **kwargs)
         self.__name = name
         self.__data = CachedData(
-            default_data={
-                "processes": {},
-                "processes_timestamp": 0,
-                "requests": {},
-                "requests_timestamp": 0,
-                "nb": 0,
-                "nb_process": 0,
-                "nb_requests": 0,
-                "timestamp": 0
-            }, interval=interval, update_fct=self._update_data, no_previous_data=True, default_on_failure=True,
+            default_data=DEFAULT, interval=interval, update_fct=self._update_data, no_previous_data=True, default_on_failure=True,
             name="Backend-%s" % name
         )
 

@@ -218,6 +218,15 @@ class BackendManager(object):
 
         return data
 
+    def nb_user(self):
+        """Get the number of user connected"""
+        users = []
+        for backend in self.to_list():
+            for user in backend.users():
+                if user not in users:
+                    users.append(user)
+        return len(users)
+
     def monitoring_host(self, backend):
 
         all_backend = True
@@ -266,7 +275,6 @@ class BackendManager(object):
             data["memory_total"] += to_gb(backend.host("memory_total"))
             data["swap"] += to_gb(backend.host("swap_used"))
             data["swap_total"] += to_gb(backend.host("swap_total"))
-            data["nb_users"] += backend.nb_user()
             data["nb_processes"] += backend.nb_process()
             data["nb_requests"] += backend.nb_requests()
             data["backends"].append({
@@ -296,6 +304,8 @@ class BackendManager(object):
                         "username": username,
                         "timestamp": datetime.datetime.fromtimestamp(request).strftime('%d-%m-%Y %H:%M:%S')
                     })
+
+        data["nb_users"] += self.nb_user()
 
         for backend in self.to_list(all_backends=True):
             if not backend.available():

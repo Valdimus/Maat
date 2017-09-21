@@ -20,6 +20,15 @@
 # Date: 20/03/2017
 
 from tests.fake_studio import FakeStudio
+from tests.fake_process_monitoring import FakeProcessMonitoring
+
+
+def check_consistency(data, default):
+    """Check concistency of the data"""
+    for name, value in default.items():
+        assert(name in data)
+        # assert(type(value) == type(data[name]))
+
 
 def get_open_port():
     """

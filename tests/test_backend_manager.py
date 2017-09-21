@@ -2,7 +2,9 @@ import time
 import json
 import pytest
 import logging
-from maat import Backend, DummyResource, BackendManager, DirectAgentResource, MaatAgent, FakeProcessMonitoring
+
+from tests import FakeProcessMonitoring
+from maat import Backend, DummyResource, BackendManager, DirectAgentResource, MaatAgent
 
 # Copyright (C) 2017 NOUCHET Christophe
 #
@@ -71,7 +73,7 @@ def test_assignement():
     # }
 
     agent = DirectAgentResource(
-        MaatAgent("FakeProcess", sleep_time=0.5, process_interval=0.5, process_monitoring=FakeProcessMonitoring))
+        MaatAgent("FakeProcess", sleep_time=0.5, process_interval=0.5, process_monitoring=FakeProcessMonitoring, max_process_by_user=2))
 
     agent.agent.process_monitoring.add_session("christophe")
 
@@ -84,11 +86,11 @@ def test_assignement():
     #     "/v1/ping1231321": "OK"
     # }, "agentHost", 123456, ping_cmd="/v1/ping", default_url="/v1/ping", name="FakeAgent")
 
-    backend = Backend("Test", service, agent, version="v1", interval=2.0, max_session_by_user=2)
+    backend = Backend("Test", service, agent, version="v1", interval=2.0)
 
-    agent1 = DirectAgentResource(MaatAgent("FakeProcess", sleep_time=0.5, process_interval=0.5))
+    agent1 = DirectAgentResource(MaatAgent("FakeProcess", sleep_time=0.5, process_interval=0.5, max_process_by_user=2))
     agent1.set_available(False)
-    backend1 = Backend("Toto", service, agent1, version="v1", interval=2.0, max_session_by_user=2)
+    backend1 = Backend("Toto", service, agent1, version="v1", interval=2.0)
 
     # Add a backend
     backendmanager.add(backend)
@@ -148,8 +150,8 @@ def test_assignement():
     })
 
     # Get all number
-    assert(backendmanager.all_nb_user_sessions_by_backend("christophe") == 1)
-    assert(backendmanager.all_nb_user_sessions_by_backend("Toto") == 0)
+    assert(backendmanager.all_nb_user_sessions("christophe") == 1)
+    assert(backendmanager.all_nb_user_sessions("Toto") == 0)
 
     assert(backendmanager.nb_process_by_backend() == {
         "Test": 1

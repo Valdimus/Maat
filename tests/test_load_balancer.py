@@ -30,8 +30,9 @@ import psutil
 import requests
 from flask import Flask
 import multiprocessing as mp
+from tests import FakeProcessMonitoring
 from maat import LoadBalancer, Backend, BackendManager, MaatAgent, SuperDummyResource
-from maat import FakeProcessMonitoring, create_agent_api, Resource, DirectAgentResource, MaatAgent
+from maat import create_agent_api, Resource, DirectAgentResource, MaatAgent
 from tests import get_open_port
 
 

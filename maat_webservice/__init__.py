@@ -19,5 +19,6 @@
 # Email: nouchet.christophe@gmail.com
 # Date: 25/03/2017
 
-from maat.webservice.webservice import Webservice
-from maat.webservice.test import TestWebservice
+from maat_webservice.webservice import Webservice
+from maat_webservice.test import TestWebservice
+from maat_webservice.cas import CASWebservice

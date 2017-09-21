@@ -20,7 +20,7 @@
 # Date: 22/03/2017
 
 from flask_cas import CAS, login_required
-from maat.webservices import Webservice
+from maat_webservice import Webservice
 
 
 class CASWebservice(Webservice):
