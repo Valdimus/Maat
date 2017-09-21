@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+          <!--
+# Copyright (C) 2017 NOUCHET Christophe
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License along
+# with this program. If not, see <http://www.gnu.org/licenses/>.
+
+# Author: Christophe Nouchet
+# Email: nouchet.christophe@gmail.com
+# Date: 23/03/2017
+-->
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
+    <meta name="description" content="">
+    <meta name="author" content="">
+    <link rel="icon" href="favicon.ico">
+
+    <title>Maât - Users</title>
+
+    <link href="css/jquery.dynatable.css" rel="stylesheet">
+
+    <!-- Bootstrap core CSS -->
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+
+    <!-- Custom styles for this template -->
+    <link href="css/dashboard.css" rel="stylesheet">
+
+    <style>
+      #gauge_cpu, #gauge_memory, #gauge_swap, #gauge_backend {
+        width:250px; height:250px;
+        display: inline-block;
+        margin: 1em;
+      }
+
+      th a {
+        color: #212529;
+      }
+
+      th a:hover {
+        color: #212529;
+      }
+
+    </style>
+  </head>
+
+  <body>
+    <nav class="navbar navbar-expand-md navbar-dark fixed-top bg-dark">
+      <a  target="_blank" class="navbar-brand" href="https://gogs.atrevrix.fr/valdimus/Maat">Maât</a>
+      <button class="navbar-toggler d-lg-none" type="button" data-toggle="collapse" data-target="#navbarsExampleDefault" aria-controls="navbarsExampleDefault" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+
+      <div class="collapse navbar-collapse" id="navbarsExampleDefault">
+        <ul class="navbar-nav mr-auto">
+          <li class="nav-item">
+            <a class="nav-link" href="/">Home</a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link active" href="/users">Users <span class="sr-only">(current)</span></a>
+          </li>
+          <li class="nav-item ">
+            <a class="nav-link" href="/monitoring">Monitoring</a>
+          </li>
+
+          <!--<li class="nav-item">-->
+            <!--<a class="nav-link" href="#">Help</a>-->
+          <!--</li>-->
+        </ul>
+        <div class="form-inline mt-2 mt-md-0">
+          <div class="my-2 my-sm-0">
+            <h2> <span class="badge badge-success">{{ username }}</span></h2>
+          </div>
+        </div>
+      </div>
+    </nav>
+
+    <div class="container-fluid">
+      <div class="row">
+        <nav class="col-sm-3 col-md-2 d-none d-sm-block bg-light sidebar">
+          <ul id="menugauche" class="nav nav-pills flex-column">
+            <li class="nav-item active">
+              <a class="nav-link" href="#">Overview</a>
+            </li>
+            <li class="nav-item">
+              <a class="nav-link" href="#users">Users</a>
+            </li>
+          </ul>
+        </nav>
+
+
+        <main class="col-sm-9 ml-sm-auto col-md-10 pt-3" role="main">
+          <h1 id="overview">Overview</h1>
+
+          <section class="row text-center placeholders">
+            <div class="col-12 col-sm-6 placeholder">
+              <h2 id="nb_users">100</h2>
+              <h4>Connected Users</h4>
+              <div class="text-muted"></div>
+            </div>
+            <div class="col-12 col-sm-6 placeholder">
+              <h2 id="nb_processes">200</h2>
+              <h4>Processes</h4>
+              <span class="text-muted"></span>
+            </div>
+          </section>
+
+
+          <h1 id="users">Users</h1>
+          <div class="table-responsive">
+            <table id="table_users" class="table table-striped" style="width: 100%">
+              <thead>
+                <tr>
+                  <th data-dynatable-column="user">Username</th>
+                  <th data-dynatable-column="cpu">CPU</th>
+                  <th data-dynatable-column="memory">Memory</th>
+                  <th data-dynatable-column="processes">Processes</th>
+                </tr>
+              </thead>
+              <tbody>
+              </tbody>
+            </table>
+          </div>
+        </main>
+      </div>
+    </div>
+
+    <!-- Bootstrap core JavaScript
+    ================================================== -->
+    <!-- Placed at the end of the document so the pages load faster -->
+    <script src="/js/jquery.min.js"></script>
+    <script>window.jQuery || document.write('<script src="/js/jquery.min.js"><\/script>')</script>
+    <script src="/js/popper.min.js"></script>
+    <script src="/js/bootstrap.min.js"></script>
+    <!-- IE10 viewport hack for Surface/desktop Windows 8 bug -->
+    <script src="/js/ie10-viewport-bug-workaround.js"></script>
+    <script src="/js/raphael-2.1.4.min.js"></script>
+    <script src="/js/justgage.js"></script>
+    <script src="/js/jquery.dynatable.js"></script>
+    <script>
+
+    //// Acticvate dynatable ////
+
+    // Backends tables
+    $('#table_users').dynatable({
+      features: {
+        paginate: false,
+        sort: true,
+        pushState: true,
+        search: true,
+        recordCount: false,
+        perPageSelect: false
+      },
+    });
+
+    // Function to update the dashboard
+    function update_dashboard() {
+      $.get("/api/v1/users", function(data) {
+          myRecords = JSON.parse(data);
+          console.log(myRecords)
+          // Update table
+          records = myRecords["users"]
+          var dynatable = $('#table_users').data('dynatable');
+          $('#table_users').dynatable({
+            dataset: {
+              records: records
+            }
+          }).data('dynatable');
+          dynatable.settings.dataset.originalRecords = records;
+          dynatable.process();
+
+          // Update h2
+          $('#nb_users').html(myRecords["nb_users"])
+          $('#nb_processes').html(myRecords["nb_processes"])
+        });
+    }
+
+    //Update the dashboard on startup
+    update_dashboard();
+
+    // Update dashboard every 2 seconds
+    setInterval(update_dashboard, 2000);
+    </script>
+    <!--<script>-->
+      <!--$('#menugauche li').click(function(e) {-->
+        <!--$('#menugauche li.active').removeClass('active');-->
+        <!--var $this = $(this);-->
+        <!--if (!$this.hasClass('active')) {-->
+          <!--$this.addClass('active');-->
+        <!--}-->
+        <!--e.preventDefault();-->
+      <!--});-->
+    <!--</script>-->
+    <footer class="footer" style="margin-top: 5%;">
+        <p>&copy; 2017 Maât</p>
+    </footer>
+  </body>
+</html>

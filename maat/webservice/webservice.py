@@ -56,12 +56,6 @@ class Webservice:
 
     def route(self):
 
-        @self.__app.route("/redirect/<backend_name>")
-        @self.login_required
-        def redirect_toto(backend_name):
-            """Will do the redirection to the corresponding backend"""
-            return self.route_redirect(backend_name)
-
         @self.__app.route("/")
         @self.login_required
         def root():
@@ -73,13 +67,42 @@ class Webservice:
 
         @self.__app.route("/users")
         def get_users_page():
-            return redirect("/")
+            data = {
+                "username": self.username()
+            }
+            return render_template('users.html', **data)
+
+        @self.__app.route("/api/v1/users")
+        def api_users():
+            return json.dumps(self.route_user())
+
+        @self.__app.route("/monitoring")
+        def monitor():
+            data = {
+                "username": self.username()
+            }
+            return render_template('monitoring.html', **data)
 
         @self.__app.route("/add_session")
         @self.login_required
         def add_session():
             """Will create a session"""
             return self.route_add_session()
+
+        @self.__app.route("/redirect/<backend_name>")
+        @self.login_required
+        def redirect_toto(backend_name):
+            """Will do the redirection to the corresponding backend"""
+            return self.route_redirect(backend_name)
+
+        @self.__app.route("/js/<path:path>")
+        def send_js(path):
+            return send_from_directory('js', path)
+
+        @self.__app.route("/css/<path:path>")
+        def send_css(path):
+            return send_from_directory('css', path)
+
 
         # All the api route
 
@@ -99,11 +122,11 @@ class Webservice:
             """Will list all backends"""
             return json.dumps(self.route_monitoring(backend))
 
-        @self.__app.route("/api/v1/users")
-        @self.__app.route("/api/v1/users/<backend>")
-        def list_users(backend=None):
-            """List all conencted user"""
-            return self.route_list_user()
+        # @self.__app.route("/api/v1/users")
+        # @self.__app.route("/api/v1/users/<backend>")
+        # def list_users(backend=None):
+        #     """List all conencted user"""
+        #     return self.route_list_user()
 
         @self.__app.route("/api/v1/monitor")
         @self.__app.route("/api/v1/monitor/<backend>")
@@ -127,19 +150,6 @@ class Webservice:
             """Count the number of connected user"""
             return self.route_nb_users()
 
-        @self.__app.route("/js/<path:path>")
-        def send_js(path):
-            return send_from_directory('js', path)
-
-        @self.__app.route("/css/<path:path>")
-        def send_css(path):
-            return send_from_directory('css', path)
-
-        @self.__app.route("/monitoring")
-        def monitor():
-            data = {}
-            data["username"] = self.username()
-            return render_template('monitoring.html', **data)
 
 
         @self.__app.route("/view/monitor")
@@ -240,6 +250,22 @@ class Webservice:
             "max_process": self.load_balancer.max_sessions_by_user,
             "cpu_percent": cpu_percent
         }
+
+    def route_user(self, username=None):
+        data = self.load_balancer.backend_manager.monitoring_users(username=username)
+
+        retour = {
+            "nb_users": 0,
+            "nb_processes": 0,
+            "users": []
+        }
+
+        for _, info in data.items():
+            retour["nb_users"] += 1
+            retour["nb_processes"] += info["processes"]
+            retour["users"].append(info)
+
+        return retour
 
     def route_monitoring(self, backend=None):
         return self.load_balancer.backend_manager.monitoring_host(backend)

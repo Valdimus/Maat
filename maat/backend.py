@@ -94,6 +94,16 @@ class Backend:
             return self.data["processes"][username]
         return []
 
+    def get_process(self, username=None):
+        """Get all process for an user or for all the user if username is None"""
+
+        if isinstance(username, str):
+            return self.processes(username)
+        ret_processes = []
+        for _, processes in self.data["processes"].items():
+            ret_processes += processes
+        return ret_processes
+
     def host(self, name=None):
         """Get of information"""
         host_data = self.data["host"]

@@ -187,6 +187,37 @@ class BackendManager(object):
                 tmp[user][backend.name] = len(backend.data["processes"][user])
         return tmp
 
+    def monitoring_users(self, username=None):
+        """Monitor users processes"""
+
+        processes = []
+        for backend in self.to_list():
+            processes += backend.get_process(username=username)
+
+        def create_data():
+            return {
+                "user": "",
+                "cpu": 0.0,
+                "memory": 0.0,
+                "processes": 0
+            }
+
+        def update_data(data, process):
+            username = process["username"]
+
+            if username not in data:
+                data[username] = create_data()
+            data[username]["user"] = username
+            data[username]["cpu"] += process["cpu_percent"]
+            data[username]["memory"] += to_gb(process["memory_info"]["rss"])
+            data[username]["processes"] += 1
+
+        data = {}
+        for process in processes:
+            update_data(data, process)
+
+        return data
+
     def monitoring_host(self, backend):
 
         all_backend = True
